@@ -101,9 +101,9 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,const)
 
     %figure
     for t = 1: iter
-        clf
-        show(sample,reg,2,1,t,jet(256),const)   
-        M=getframe;
+        %clf
+        %show(sample,reg,2,1,t,jet(256),const)   
+        %M=getframe;
 
         [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
             delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, const);

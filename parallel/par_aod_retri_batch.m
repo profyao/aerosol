@@ -11,7 +11,7 @@ function par_aod_retri_batch(Method,Location,const)
     
     N = length(Dates);
     
-    for i = 1:N
+    for i = 8:8
         
         Date = Dates{i};
         Path = Paths(i);

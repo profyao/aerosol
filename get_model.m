@@ -16,9 +16,9 @@ function atm_path = get_model(tau,theta,x,y,ExtCroSect,CompSSA,smart,const)
         fraction_band = ExtCroSect(band, Component_Particle)./ ExtCroSect(Band_Green, Component_Particle).* ...
             theta' / scale_factor;
 
-        ssa_mixture = CompSSA(band, Component_Particle)*fraction_band';
         ssa_k = CompSSA(band, Component_Particle); %1x8
-       
+        ssa_mixture = ssa_k*fraction_band';
+
         tau = double(tau*scale_factor);
 
         tau_cam_k_ss = permute(reshape(smart.ss(:, ceil(x/RegScale),ceil(y/RegScale), Component_Particle, band, :),Model_OpticalDepthLen,Component_Num,Cam_Dim),[1,3,2]);
