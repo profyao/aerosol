@@ -1,6 +1,6 @@
-function [atm_path,surf,resid] = get_resid(tau,theta,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit)
-    
-    [atm_path,surf_lim] = get_model(tau,theta,ExtCroSect,CompSSA,smartp,const,add_limit);
+function [atm_path,surf,resid] = get_resid_mixture(tau,mixture,regp,smartp,MixSSA,CompFrac,ExtCroSect,const,add_limit,kf)
+
+    [atm_path,surf_lim] = get_model_mixture(tau,mixture,MixSSA,CompFrac,ExtCroSect,smartp,const,add_limit);
 
     upbd = atm_path + surf_lim > regp.min_equ_ref;
    

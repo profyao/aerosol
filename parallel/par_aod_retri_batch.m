@@ -1,4 +1,4 @@
-function par_aod_retri_batch(Method,Location,const)
+function par_aod_retri_batch(Method,Location,kf,dy,par,const,add_limit)
     
     [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
     
@@ -11,20 +11,20 @@ function par_aod_retri_batch(Method,Location,const)
     
     N = length(Dates);
     
-    for i = 8:8
+    for i = 1:N
         
         Date = Dates{i};
         Path = Paths(i);
         Orbit = Orbits(i);
         Block = Blocks(i);
         
-        [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,const);
+        [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,const,add_limit);
         
         if (error_flag == 1)
             fprintf(strcat(Date,'_P',num2str(Path,'%03d'),'_O',num2str(Orbit,'%06d'),'_B',num2str(Block),' is skipped!\n'))
             continue
         else
-            save2cache(Date,Path,Orbit,Block,const,sample,Method)
+            save2cache(Date,Path,Orbit,Block,const,sample,Method,kf,dy,par)
         end
 
     end

@@ -1,4 +1,4 @@
-function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,smart,ExtCroSect,CompSSA,const,varargin)
+function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit,varargin)
 
     switch var_str
         
@@ -22,13 +22,10 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,xp,yp
 
                     g0 = g_v;
 
-                    taul = max(taup - delta_tau,1e-3);
+                    taul = max(taup - delta_tau,0);
                     taur = min(taup + delta_tau,3);
-
-                    [~,~,residl] = get_resid(taul,thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                            smart,ExtCroSect,CompSSA,const);
-                    [~,~,residr] = get_resid(taur,thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                            smart,ExtCroSect,CompSSA,const);
+                    [~,~,residl] = get_resid(taul,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+                    [~,~,residr] = get_resid(taur,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
 
                     if isinf(residl(1)) || isinf(residr(1))
                         g_v = 0;
@@ -46,7 +43,7 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,xp,yp
 
                     g_v = (chisql-chisqr+smoothl-smoothr)/(taul-taur);
                     
-                    if abs(g_v-g0)<abs(g0)*1e-2
+                    if abs(g_v-g0)<abs(g0)*1e-3
                         break
                     end
                     
@@ -93,11 +90,8 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,xp,yp
 
                         thetal = thetap - delta_theta_v; thetal(thetal<0)=0;
                         thetar = thetap + delta_theta_v;
-
-                        [~,~,residl] = get_resid(taup,thetal/sum(thetal),xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                                smart,ExtCroSect,CompSSA,const);
-                        [~,~,residr] = get_resid(taup,thetar/sum(thetar),xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                                smart,ExtCroSect,CompSSA,const);
+                        [~,~,residl] = get_resid(taup,thetal/sum(thetal),regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+                        [~,~,residr] = get_resid(taup,thetar/sum(thetar),regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
 
                         if isinf(residl(1)) || isinf(residr(1))
                             g_v(c) = 0;

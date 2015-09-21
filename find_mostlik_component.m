@@ -1,18 +1,20 @@
-function [cor1,cor2,ratio,component] = find_mostlik_component(Date,Path,Orbit,Block,band_ind,const)
+function [Component_Particle,Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const)
 
-    [reg,smart] = load_cache(Date,Path,Orbit,Block,const,'reg','smart');
-    [x,y] = find(reg.reg_is_used);
-    cor1 = NaN*ones(reg.num_reg_used,1);
-    cor2 = NaN*ones(reg.num_reg_used,1);
-    ratio = NaN*ones(reg.num_reg_used,1);
-    component = NaN*ones(reg.num_reg_used,1);
+    cor1 = zeros(reg.num_reg_used,const.Band_Dim);
+    cor2 = zeros(reg.num_reg_used,const.Band_Dim);
+    ratio = zeros(reg.num_reg_used,const.Band_Dim);
+    component = zeros(reg.num_reg_used,const.Band_Dim);
+    const.Component_Particle = 1:21;
+    const.Component_Num = length(const.Component_Particle);
     
     parfor p=1:reg.num_reg_used
-        [corp,cor2(p),ratiop] = extract_cor(reg,smart,'SS',x(p),y(p),band_ind,const);
-        [tmp,id1] = max(corp);
-        [cor1(p),id2] = max(tmp);
-        component(p) = id2;
-        ratio(p) = ratiop(id1(id2),id2);
+        [cor1(p,:),cor2(p,:),ratio(p,:),component(p,:)] = extract_cor2(reg,smart,x(p),y(p),ExtCroSect,CompSSA,kf,const);
     end
+    
+    sorted_table = sortrows(tabulate(component(:,1)),2);
+    Component_Particle = int8(sorted_table(end-7:end,1));
+    Component_Num = length(Component_Particle);
+    
+    disp(Component_Particle')
 
 end

@@ -1,21 +1,18 @@
-function [resid,surf] = get_resid_eof(channel_is_used,mean_equ_ref,eof,max_usable_eof,atm_path,const)
+function [resid,surf] = get_resid_eof(regp,atm_path,const)
 
-    Cam_Dim = const.Cam_Dim;
-    Band_Dim = const.Band_Dim;
+    resid = NaN * ones(const.Cam_Dim, const.Band_Dim);
+    surf = NaN * ones(const.Cam_Dim,const.Band_Dim);
 
-    resid = NaN * ones(Cam_Dim, Band_Dim);
-    surf = NaN * ones(Cam_Dim,Band_Dim);
+    for band =1:const.Band_Dim
 
-    for band =1:Band_Dim
-
-        cam_used = channel_is_used(:,band);
+        cam_used = regp.channel_is_used(:,band);
         num_cam_used = sum(cam_used);
-        diff = mean_equ_ref(cam_used,band) - atm_path(cam_used, band);
-        eof_band = reshape(eof(band, 1:num_cam_used, 1:num_cam_used),num_cam_used,num_cam_used);
+        diff = regp.mean_equ_ref(cam_used,band) - atm_path(cam_used, band);
+        eof_band = reshape(regp.eof(band, 1:num_cam_used, 1:num_cam_used),num_cam_used,num_cam_used);
 
-        exp_coef = diff' * eof_band;
-        idx = 1:num_cam_used <= max_usable_eof(band);
-        surf(cam_used, band) = eof_band * (idx.*exp_coef)';
+        exp_coef = eof_band' * diff;
+        idx = 1:num_cam_used <= regp.max_usable_eof(band);
+        surf(cam_used, band) = eof_band(:,idx) * exp_coef(idx);
         resid(cam_used, band) = diff - surf(cam_used,band);
 
     end

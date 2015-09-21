@@ -16,10 +16,11 @@ function plot_result(plot_name,const,varargin)
         else
             figure
             for p = 2:length(varargin)
-                [aod_model,aod_aeronet] = load_aod_batch(varargin{p},Location,const);
+                [aod_model,aod_aeronet] = load_aod_batch(Location,const,varargin{p});
                 aod_max = 1.1*max([aod_max;aod_model;aod_aeronet]);
                 h = scatter(aod_aeronet,aod_model,'MarkerEdgeColor',cols(p-1,:),'MarkerFaceColor',cols(p-1,:));
                 fprintf('correlation with aeronet is %f\n',corr(aod_model,aod_aeronet));
+                fprintf('rms is %f\n',norm(aod_model-aod_aeronet));
                 xlim([0,aod_max]),ylim([0,aod_max])
                 currentunits = get(gca,'Units');
                 set(gca, 'Units', 'Points');

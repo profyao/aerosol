@@ -6,6 +6,8 @@ const.header_MIL2ASAE_filename = 'MISR_AM1_AS_AEROSOL_P';
 const.header_MIL2ASAF = 'ftp://l5eil01.larc.nasa.gov/MISR/MIL2ASAF.001/';
 const.MIANSMT_SS_filename = 'MISR_AM1_SMART_TOA_RHO_ATM_SS_F02_0009.hdf';
 const.MIANSMT_MS_filename = 'MISR_AM1_SMART_TOA_RHO_ATM_MS_F02_0009.hdf';
+const.MIANSMT_TDIFF_filename = 'MISR_AM1_SMART_TDIFF_F02_0009.hdf';
+const.MIANSMT_EDIFF_filename = 'MISR_AM1_SMART_BOA_EDIFF_F02_0009.hdf';
 const.header_MIANCAGP_url1 = 'ftp://l5eil01.larc.nasa.gov/MISR/MIANCAGP.001/1999.11.07/';
 const.header_MIANCAGP_url2 = 'ftp://l5eil01.larc.nasa.gov/MISR/MIANCAGP.001/1999.11.08/';
 const.header_MIANCAGP_filename = 'MISR_AM1_AGP_P';
@@ -69,8 +71,9 @@ const.Config_spectral_corr_matrix = [1.0106,-0.0057,-0.0038,-0.0011;
     -0.0060,-0.0048,1.0145,-0.0036;
     -0.0048,-0.0033,-0.0136,1.0217];
 
-const.Config_min_het_subr_thresh = 16/const.RegScale;
-
+const.sample_size = const.RegSize*const.RegSize;
+const.Config_min_het_subr_thresh = const.sample_size/4;
+const.min_cam_used=2;
 const.Config_first_eigenvalue_for_eofs = 1;
 const.Config_eigenvector_variance_thresh = 0.95;
 
@@ -88,9 +91,14 @@ const.Model_ScatterAngleGrid = [-1,0,2.5,5,7.5,10,12.5,15,17.5,20,22.5,25,27.5,3
 const.Model_OpticalDepthGrid = [0,0.05,0.1,0.2,0.4,0.6,0.8,1,1.5,2,3,4,6];
 const.Model_OpticalDepthLen = length(const.Model_OpticalDepthGrid);
 
+const.Model_AOTGridGap = 0.025;
+const.Model_OpticalDepthFinerGrid = 0:const.Model_AOTGridGap:3;
+const.Model_OpticalDepthFinerGridLen = length(const.Model_OpticalDepthFinerGrid);
+
 const.Component_Particle = [1,2,3,6,8,14,19,21];
-%const.Component_Particle = [1,4,5,6,10,11,16,17];
 const.Component_Num = length(const.Component_Particle);
+
+const.Config_albedo_thresh_land = 0.015;
 
 const.cols = [0    0.4470    0.7410
     0.8500    0.3250    0.0980
@@ -99,3 +107,7 @@ const.cols = [0    0.4470    0.7410
     0.4660    0.6740    0.1880
     0.3010    0.7450    0.9330
     0.6350    0.0780    0.1840];
+
+const.str_kf = {'','_k-factor'};
+const.str_dy = {'','_dynamic_component'};
+const.str_par = {'','_par'};

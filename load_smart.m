@@ -1,77 +1,72 @@
-function smart = load_smart(Date,Path,Orbit,Block,const)
-    
-    MIANSMT_MS_filename = const.MIANSMT_MS_filename;
-    MIANSMT_SS_filename = const.MIANSMT_SS_filename;
-    header_MIL2ASAE_filename = const.header_MIL2ASAE_filename;
-    Cam_Dim = const.Cam_Dim;
-    Band_Dim = const.Band_Dim;
-    Model_ComponentDim = const.Model_ComponentDim;
-    Model_OpticalDepthLen = const.Model_OpticalDepthLen;
-    Model_OpticalDepthGrid = const.Model_OpticalDepthGrid;
-    Model_mu0Grid = const.Model_mu0Grid;
-    Model_muGrid = const.Model_muGrid;
-    Model_ScatterAngleGrid = const.Model_ScatterAngleGrid;
-    Model_Pressure = const.Model_Pressure;
-    XDim_r17600 = const.XDim_r17600;
-    YDim_r17600 = const.YDim_r17600;
+function smart = load_smart(Date,Path,Orbit,Block,const,add_limit)
     
     Orbit = num2str(Orbit,'%06d');
     Path = num2str(Path,'%03d');
     
     dir_aerosol = fullfile('products/MIL2ASAE/',Date);
-    file_aerosol = strcat(dir_aerosol,'/',header_MIL2ASAE_filename,Path,'_O',Orbit,'_F12_0022.hdf');
+    file_aerosol = strcat(dir_aerosol,'/',const.header_MIL2ASAE_filename,Path,'_O',Orbit,'_F12_0022.hdf');
     
-    file_smart_ss = fullfile('products/MIANSMT/',MIANSMT_SS_filename);
-    file_smart_ms = fullfile('products/MIANSMT/',MIANSMT_MS_filename);
+    file_smart_ss = fullfile('products/MIANSMT/',const.MIANSMT_SS_filename);
+    file_smart_ms = fullfile('products/MIANSMT/',const.MIANSMT_MS_filename);
 
     AlgTypeFlag = hdfread(file_aerosol, 'RegParamsAer', 'Fields', 'AlgTypeFlag', ...
-        'Index',{[Block  1  1],[1  1  1],[1  XDim_r17600  YDim_r17600]}); %8x32, 17.6km
+        'Index',{[Block  1  1],[1  1  1],[1  const.XDim_r17600  const.YDim_r17600]}); %8x32, 17.6km
     SolZenAng = hdfread(file_aerosol, 'RegParamsGeometry', 'Fields', 'SolZenAng', ...
-    'Index',{[Block  1  1],[1  1  1],[1  XDim_r17600  YDim_r17600]}); % 8x32, 17.6km
+    'Index',{[Block  1  1],[1  1  1],[1  const.XDim_r17600  const.YDim_r17600]}); % 8x32, 17.6km
     ViewZenAng = hdfread(file_aerosol, 'RegParamsGeometry', 'Fields', 'ViewZenAng', ...
-        'Index',{[Block  1  1  1],[1  1  1  1],[1  XDim_r17600  ...
-        YDim_r17600  Cam_Dim]}); % 8x32x9, 17.6km
+        'Index',{[Block  1  1  1],[1  1  1  1],[1  const.XDim_r17600  ...
+        const.YDim_r17600  const.Cam_Dim]}); % 8x32x9, 17.6km
     ScatterAng = hdfread(file_aerosol, 'RegParamsGeometry', 'Fields', 'ScatterAng', ...
-        'Index',{[Block  1  1  1],[1  1  1  1],[1  XDim_r17600 ...
-        YDim_r17600  Cam_Dim]}); % 8x32x9, 17.6km
+        'Index',{[Block  1  1  1],[1  1  1  1],[1  const.XDim_r17600 ...
+        const.YDim_r17600  const.Cam_Dim]}); % 8x32x9, 17.6km
     SfcPres = hdfread(file_aerosol, 'RegParamsEnvironmental', 'Fields', 'SfcPres', ...
-        'Index',{[Block  1  1],[1  1  1],[1   XDim_r17600  YDim_r17600]}); %8x32
+        'Index',{[Block  1  1],[1  1  1],[1   const.XDim_r17600  const.YDim_r17600]}); %8x32
     
-    % build up data set for different cams
-    ss_cam = NaN * ones(Cam_Dim, Band_Dim, Model_ComponentDim, Model_OpticalDepthLen,...
-        length(Model_Pressure), 2, 4, 2);
-    ms_cam = NaN * ones(Cam_Dim, Band_Dim, Model_ComponentDim, Model_OpticalDepthLen,...
-        length(Model_Pressure), 2, 4, 2);
+    if add_limit == true
+        
+        file_smart_tdiff = fullfile('products/MIANSMT/',const.MIANSMT_TDIFF_filename);
+        file_smart_ediff = fullfile('products/MIANSMT/',const.MIANSMT_EDIFF_filename);
+        
+        EdiffSS = hdfread(file_smart_ediff, '/EdiffSingleScatter', 'Index', {[1  1  1  1  1],[1  1  1  1  1],[4  21  13   2  81]});
+        EdiffMS = hdfread(file_smart_ediff, '/EdiffMultipleScatter', 'Index', {[1  1  1  1  1],[1  1  1  1  1],[4  21  13   2  81]});
+        EdiffSS = exp(double(EdiffSS/1000));
+        EdiffMS = exp(double(EdiffMS/1000));
+        TdiffSS = hdfread(file_smart_tdiff,'/TSingleScatter', 'Index', {[1  1  1  1  1],[1  1  1  1  1],[4  21  13   2  29]});
+        TdiffMS = hdfread(file_smart_tdiff, '/TMultipleScatter', 'Index', {[1  1  1  1  1],[1  1  1  1  1],[4  21  13   2  29]});            
+        TdiffSS = exp(double(TdiffSS/1000));
+        TdiffMS = exp(double(TdiffMS/1000));
+
+    end
     
     % interp view and scatter angles
-    smart.ss = NaN*ones(Model_OpticalDepthLen, XDim_r17600,YDim_r17600, Model_ComponentDim, Band_Dim, Cam_Dim);
-    smart.ms = NaN*ones(Model_OpticalDepthLen, XDim_r17600,YDim_r17600, Model_ComponentDim, Band_Dim, Cam_Dim);
+    smart.ss = NaN*ones(const.Model_OpticalDepthLen, const.XDim_r17600,const.YDim_r17600, const.Model_ComponentDim, const.Band_Dim, const.Cam_Dim);
+    smart.ms = NaN*ones(const.Model_OpticalDepthLen, const.XDim_r17600,const.YDim_r17600, const.Model_ComponentDim, const.Band_Dim, const.Cam_Dim);
     
-    smart.mu = NaN*ones(XDim_r17600, YDim_r17600, Cam_Dim); % 8x32x9
-    smart.scatter_angle = NaN*ones(XDim_r17600, YDim_r17600, Cam_Dim); % 8x32x9
-    smart.mu0 = NaN*ones(XDim_r17600,YDim_r17600); %8x32
+    smart.mu = NaN*ones(const.XDim_r17600, const.YDim_r17600, const.Cam_Dim); % 8x32x9
+    smart.scatter_angle = NaN*ones(const.XDim_r17600, const.YDim_r17600, const.Cam_Dim); % 8x32x9
+    smart.mu0 = NaN*ones(const.XDim_r17600,const.YDim_r17600); %8x32
     
     fprintf('load smart data!\n')
     
-    for ii = 1:XDim_r17600
-        for jj = 1:YDim_r17600
+    for ii = 1:const.XDim_r17600
+        for jj = 1:const.YDim_r17600
             
             % view angle
-            mu = NaN * ones(Cam_Dim,1);
-            mu_ind = NaN * ones(Cam_Dim,1);
+            mu = NaN * ones(const.Cam_Dim,1);
+            mu_ind = NaN * ones(const.Cam_Dim,1);
             % scatter angle
-            scatter_angle = NaN * ones(Cam_Dim,1);
-            scatter_angle_ind = NaN * ones(Cam_Dim,1);
+            scatter_angle = NaN * ones(const.Cam_Dim,1);
+            scatter_angle_ind = NaN * ones(const.Cam_Dim,1);
             % pressure: trim outliers
-            SfcPres(SfcPres > Model_Pressure(2)) = Model_Pressure(2);
-            SfcPres(SfcPres < Model_Pressure(1)) = Model_Pressure(1);
+            SfcPres(SfcPres > const.Model_Pressure(2)) = const.Model_Pressure(2);
+            SfcPres(SfcPres < const.Model_Pressure(1)) = const.Model_Pressure(1);
 
             if AlgTypeFlag(ii,jj) == 3 %heterogeneous surface retrieval
 
                 %disp([ii,jj]);
 
                 mu0 = double(cosd(SolZenAng(ii,jj)));
-                mu0_ind = find(Model_mu0Grid >= mu0, 1, 'first');
+                mu0_ind = find(const.Model_mu0Grid >= mu0, 1, 'first');
                 surface_pressure = double(SfcPres(ii,jj));  
 
                 % Load top-of-atmosphere equivalent reflectance
@@ -86,14 +81,20 @@ function smart = load_smart(Date,Path,Orbit,Block,const)
                 data2 = hdfread(file_smart_ms,  ['/EquivalentReflectanceMu0_',num2str(mu0_ind)], 'Index', ...
                     {[1  1  1  1  1  1],[1  1  1  1  1  1],[4  21  13  2  29  96]});
                 MS = cat(ndims(data1)+1, data1, data2);
+                
+                % build up data set for different cams
+                ss_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
+                    length(const.Model_Pressure), 2, 4, 2);
+                ms_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
+                    length(const.Model_Pressure), 2, 4, 2);
 
-                for cam = 1:Cam_Dim
+                for cam = 1:const.Cam_Dim
 
                     mu(cam) = double(cosd(ViewZenAng(ii, jj, cam)));
-                    mu_ind(cam) = find(Model_muGrid>=mu(cam), 1, 'first');
+                    mu_ind(cam) = find(const.Model_muGrid>=mu(cam), 1, 'first');
 
                     scatter_angle(cam) = double(ScatterAng(ii,jj,cam));
-                    scatter_angle_ind(cam) = find(Model_ScatterAngleGrid>=scatter_angle(cam), 1, 'first');
+                    scatter_angle_ind(cam) = find(const.Model_ScatterAngleGrid>=scatter_angle(cam), 1, 'first');
 
                     ss_cam(cam,:,:,:,:,:,:,:) = SS(:,:,:,:,[mu_ind(cam)-1, mu_ind(cam)],[1, scatter_angle_ind(cam)-1, scatter_angle_ind(cam), end], :);
                     ms_cam(cam,:,:,:,:,:,:,:) = MS(:,:,:,:,[mu_ind(cam)-1, mu_ind(cam)],[1, scatter_angle_ind(cam)-1, scatter_angle_ind(cam), end], :);
@@ -122,22 +123,62 @@ function smart = load_smart(Date,Path,Orbit,Block,const)
                 ss_cam = exp(double(ss_cam)/1000);
                 ms_cam = exp(double(ms_cam)/1000);
 
-                for cam = 1:Cam_Dim
-                    [x1,x2,x3,x4,x5] = ndgrid(Model_OpticalDepthGrid, Model_Pressure,...
-                                Model_muGrid([mu_ind(cam)-1, mu_ind(cam)]), ...
-                                Model_ScatterAngleGrid([scatter_angle_ind(cam)-1, scatter_angle_ind(cam)]), ...
-                                Model_mu0Grid([mu0_ind-1, mu0_ind]));
+                for cam = 1:const.Cam_Dim
+                    [x1,x2,x3,x4,x5] = ndgrid(const.Model_OpticalDepthGrid, const.Model_Pressure,...
+                                const.Model_muGrid([mu_ind(cam)-1, mu_ind(cam)]), ...
+                                const.Model_ScatterAngleGrid([scatter_angle_ind(cam)-1, scatter_angle_ind(cam)]), ...
+                                const.Model_mu0Grid([mu0_ind-1, mu0_ind]));
 
-                    for kk = 1:Model_ComponentDim
-                        for band  = 1:Band_Dim %opt_depth x pressure x mu x 
-                            smart.ss(:, ii,jj,kk, band, cam) = interpn(x1,x2,x3,x4,x5,reshape(ss_cam(cam, band, kk,:,:,:,[2,3],:),Model_OpticalDepthLen,2,2,2,2),...
-                                Model_OpticalDepthGrid, surface_pressure, mu(cam), scatter_angle(cam), mu0);
-                            smart.ms(:, ii,jj,kk, band, cam) = interpn(x1,x2,x3,x4,x5,reshape(ms_cam(cam, band, kk,:,:,:,[2,3],:),Model_OpticalDepthLen,2,2,2,2),...
-                                Model_OpticalDepthGrid, surface_pressure, mu(cam), scatter_angle(cam), mu0);   
+                    for kk = 1:const.Model_ComponentDim
+                        for band  = 1:const.Band_Dim %opt_depth x pressure x mu x 
+                            smart.ss(:, ii,jj,kk, band, cam) = interpn(x1,x2,x3,x4,x5,reshape(ss_cam(cam, band, kk,:,:,:,[2,3],:),const.Model_OpticalDepthLen,2,2,2,2),...
+                                const.Model_OpticalDepthGrid, surface_pressure, mu(cam), scatter_angle(cam), mu0);
+                            smart.ms(:, ii,jj,kk, band, cam) = interpn(x1,x2,x3,x4,x5,reshape(ms_cam(cam, band, kk,:,:,:,[2,3],:),const.Model_OpticalDepthLen,2,2,2,2),...
+                                const.Model_OpticalDepthGrid, surface_pressure, mu(cam), scatter_angle(cam), mu0);   
                         end
                     end
                 end
                 
+                
+                % Load diffuse irradiance at the bottom of the atmosphere
+                SS = EdiffSS(:,:,:,:,[mu0_ind-1,mu0_ind]);
+                MS = EdiffMS(:,:,:,:,[mu0_ind-1,mu0_ind]);
+                [x1,x2,x3] = ndgrid(const.Model_OpticalDepthGrid, const.Model_Pressure, const.Model_mu0Grid([mu0_ind-1,mu0_ind]));
+                for kk = 1:const.Model_ComponentDim
+                    for band  = 1:const.Band_Dim %opt_depth x pressure x mu x 
+                        smart.ss_ediff(:, kk, band) = interpn(x1,x2,x3,squeeze(SS(band, kk,:,:,:)),...
+                            const.Model_OpticalDepthGrid, surface_pressure, mu0);
+                        smart.ms_ediff(:, kk, band) = interpn(x1,x2,x3,squeeze(MS(band, kk,:,:,:)),...
+                            const.Model_OpticalDepthGrid, surface_pressure, mu0);
+                    end
+                end
+                
+                % build up data set for different cams
+
+                ss_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
+                length(const.Model_Pressure), 2);
+                ms_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
+                length(const.Model_Pressure), 2);
+
+                for cam = 1:const.Cam_Dim
+                    ss_cam(cam,:,:,:,:,:) = TdiffSS(:,:,:,:,[mu_ind(cam)-1,mu_ind(cam)]);
+                    ms_cam(cam,:,:,:,:,:) = TdiffMS(:,:,:,:,[mu_ind(cam)-1,mu_ind(cam)]);      
+                end
+
+                for cam = 1:const.Cam_Dim    
+                    [x1,x2,x3] = ndgrid(const.Model_OpticalDepthGrid, const.Model_Pressure, const.Model_muGrid([mu_ind(cam)-1,mu_ind(cam)]));
+                    for kk = 1:const.Model_ComponentDim
+                        for band = 1:const.Band_Dim
+                            smart.ss_tdiff(:, kk, band, cam)=interpn(x1,x2,x3, squeeze(ss_cam(cam,band,kk,:,:,:)),...
+                                const.Model_OpticalDepthGrid, surface_pressure, mu(cam));
+                            smart.ms_tdiff(:, kk, band, cam)=interpn(x1,x2,x3, squeeze(ms_cam(cam,band,kk,:,:,:)),...
+                                const.Model_OpticalDepthGrid, surface_pressure, mu(cam));
+
+                        end
+                    end
+
+                end
+
                 smart.mu0(ii,jj) = mu0;
                 smart.mu(ii,jj,:) = mu;
                 smart.scatter_angle(ii,jj,:) = scatter_angle;

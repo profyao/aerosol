@@ -1,13 +1,12 @@
 function [new_taup,new_residp] = par_update_tau_pixel(xp,yp,old_residp,old_taup,old_tau_neighbor,thetap,kappa,sigmasq,delta,Method,...
-    channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,ExtCroSect,CompSSA,smart,const)
-
+    regp,smartp,ExtCroSect,CompSSA, kf, add_limit, const)
 
         n_neighbor = length(old_tau_neighbor);
         if n_neighbor > 0
             mean_neighbor = mean(old_tau_neighbor);
         end
         
-        if strcmp(Method,'CDSS') || strcmp(Method,'MCMC')
+        if strcmp(Method,'CD-random') || strcmp(Method,'MCMC')
    
             if isinf(old_residp(1))
                 taup = old_taup * 0.8;
@@ -18,22 +17,21 @@ function [new_taup,new_residp] = par_update_tau_pixel(xp,yp,old_residp,old_taup,
                 if n_neighbor > 0                   
                     mu = 0.5 * (mean_neighbor + old_taup);
                     taup = mu + delta * randn(1);
-                    taup(taup<=1e-3)=1e-3;
-                    taup(taup>=3)=3;
+                    taup(taup<0)=0;
+                    taup(taup>3)=3;
                     smooth0 = kappa * sum(old_taup - old_tau_neighbor).^2;
                     smooth1 = kappa * sum(taup-old_tau_neighbor).^2;
                 else
                     mu = old_taup;
                     taup = mu + delta * randn(1);
-                    taup(taup<=1e-3)=1e-3;
-                    taup(taup>=3)=3;
+                    taup(taup<0)=0;
+                    taup(taup>3)=3;
                     smooth0=0;smooth1=0;
                 end     
 
             end
-
-            [~,~,residp] = get_resid(taup,thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                smart,ExtCroSect,CompSSA,const);
+            
+            [~,~,residp] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
 
             new_chisq = nansum(residp.^2 ./ sigmasq);       
             chisq = nansum(old_residp.^2 ./ sigmasq);
@@ -46,7 +44,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(xp,yp,old_residp,old_taup,
 
             switch Method
 
-                case 'CDSS'
+                case 'CD-random'
 
                     if chisq + smooth0 > new_chisq + smooth1
                         new_taup = taup;
@@ -78,7 +76,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(xp,yp,old_residp,old_taup,
                     end    
             end
             
-        elseif strcmp(Method,'MAP')
+        elseif strcmp(Method,'CD')
             
             [g,flag] = grad(old_taup,old_tau_neighbor,thetap,'tau',sigmasq,old_residp,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
                 smart,ExtCroSect,CompSSA,const,kappa);
@@ -86,8 +84,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(xp,yp,old_residp,old_taup,
             if flag == -1
                 
                 new_taup = old_taup * 0.8;
-                [~,~,new_residp] = get_resid(new_taup,thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                smart,ExtCroSect,CompSSA,const);
+                [~,~,new_residp] = get_resid(new_taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
                            
             elseif flag == 0
                 

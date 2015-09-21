@@ -1,4 +1,4 @@
-function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,sigmasq,residp,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,smart,ExtCroSect,CompSSA,const,varargin)
+function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,smartp,ExtCroSect,CompSSA,const,varargin)
     
       
     switch var_str
@@ -20,9 +20,8 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
 
                     new_taup = max(taup - lambda*g,1e-3);
                     new_taup = min(new_taup,3);
-
-                    [~,~,new_residp] = get_resid(new_taup,thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                                smart,ExtCroSect,CompSSA,const);
+                    
+                    [~,~,new_residp] = get_resid(new_taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
 
                     if n_neighbor > 0 
                         new_smooth = kappa * sum(new_taup - tau_neighbor).^2;
@@ -69,8 +68,7 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                     new_thetap(new_thetap<0) = 0;
                     new_thetap = new_thetap/sum(new_thetap);
 
-                    [~,~,new_residp] = get_resid(taup,new_thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                                smart,ExtCroSect,CompSSA,const);
+                    [~,~,new_residp] = get_resid(taup,new_thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
 
 
                     new_chisq = nansum(new_residp.^2 ./ sigmasq);       

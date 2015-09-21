@@ -1,4 +1,4 @@
-function [aoda,aodb] = load_aod_batch(Method,Location,const)
+function [aoda,aodb] = load_aod_batch(Location,const,Opt)
     
     [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
     
@@ -19,15 +19,15 @@ function [aoda,aodb] = load_aod_batch(Method,Location,const)
         Orbit = Orbits(i);
         Block = Blocks(i);
         
-        [aod1, x1, y1, ~, ~] = load_aod(Date,Path,Orbit,Block,const,Method);
+        [aod1, x1, y1, ~, ~] = load_aod(Date,Path,Orbit,Block,const,Opt);
         [aod2, x2, y2, ~, ~] = load_aeronet(Date,Path,Block,Location,const);
         
         if isempty(aod1) || isempty(aod2)
-            fprintf(strcat(Date,'_P',num2str(Path,'%03d'),'_O',num2str(Orbit,'%06d'),'_B',num2str(Block),'\n',Method,' :',num2str(length(aod1)),' aeronet:',num2str(length(aod2)),' is skipped!\n'))
+            fprintf(strcat(Date,'_P',num2str(Path,'%03d'),'_O',num2str(Orbit,'%06d'),'_B',num2str(Block),'\n',Opt,' :',num2str(length(aod1)),' aeronet:',num2str(length(aod2)),' is skipped!\n'))
             continue
         else
             [tmpa,tmpb,~,~,~,~] = match_aod(aod1,x1,y1,aod2,x2,y2);
-            fprintf('%s:%d,aeronet:%d,%d points are matched!\n',Method,length(aod1),length(aod2),length(tmpa))
+            fprintf('%s:%d,aeronet:%d,%d points are matched!\n',Opt,length(aod1),length(aod2),length(tmpa))
             aoda = [aoda;tmpa];
             aodb = [aodb;tmpb];
         end

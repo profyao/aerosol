@@ -1,9 +1,9 @@
 function [new_thetap,new_residp] = par_update_theta_pixel(xp,yp,old_residp,taup,old_thetap,old_theta_neighbor,sigmasq,alpha,Method,...
-            channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,smart,ExtCroSect,CompSSA,const)
+            regp,smartp,ExtCroSect,CompSSA,kf,add_limit,const)
     
         n_neighbor = length(old_theta_neighbor);
         
-        if strcmp(Method,'CDSS')
+        if strcmp(Method,'CD-random')
         
             if n_neighbor > 0
                 mu = mean(old_theta_neighbor,2);
@@ -13,9 +13,8 @@ function [new_thetap,new_residp] = par_update_theta_pixel(xp,yp,old_residp,taup,
 
             thetap = gamrnd(mu,1);
             thetap = thetap / sum(thetap);
-
-            [~,~,residp] = get_resid(taup,thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                smart,ExtCroSect,CompSSA,const);
+                
+            [~,~,residp] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
             
             new_chisq = nansum(residp.^2 ./ sigmasq);       
             chisq = nansum(old_residp.^2 ./ sigmasq);
@@ -36,8 +35,7 @@ function [new_thetap,new_residp] = par_update_theta_pixel(xp,yp,old_residp,taup,
             thetap = gamrnd(alpha, 1); % Dirichlet independent proposal
             thetap = thetap/sum(thetap);
         
-            [~,~,residp] = get_resid(taup,thetap,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
-                smart,ExtCroSect,CompSSA,const);
+            [~,~,residp] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
             
             if isinf(old_residp(1)) && isinf(residp(1))
                 new_thetap = old_thetap;
@@ -59,7 +57,7 @@ function [new_thetap,new_residp] = par_update_theta_pixel(xp,yp,old_residp,taup,
                 end
             end
             
-        elseif strcmp(Method,'MAP')
+        elseif strcmp(Method,'CD')
             
             [g,~] = grad(taup,old_theta_neighbor,old_thetap,'theta',sigmasq,old_residp,xp,yp,channel_is_used,min_equ_ref,mean_equ_ref,eof,max_usable_eof,...
                 smart,ExtCroSect,CompSSA,const);
