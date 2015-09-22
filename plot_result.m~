@@ -17,8 +17,10 @@ function plot_result(plot_name,const,varargin)
             figure
             for p = 2:length(varargin)
                 [aod_model,aod_aeronet] = load_aod_batch(Location,const,varargin{p});
-                aod_max = 1.05*max([aod_max;aod_model;aod_aeronet]);
+                aod_max = 1.1*max([aod_max;aod_model;aod_aeronet]);
                 h = scatter(aod_aeronet,aod_model,'MarkerEdgeColor',cols(p-1,:),'MarkerFaceColor',cols(p-1,:));
+                %h = scatter(aod_aeronet,aod_model,[],cor1,'filled');colorbar
+                %h = gscatter(aod_aeronet,aod_model,d);
                 fprintf('correlation with aeronet is %f\n',corr(aod_model,aod_aeronet))
                 fprintf('rms is %f\n',norm(aod_model-aod_aeronet)/sqrt(length(aod_model)))
                 fprintf('avg bias is %f\n',mean(aod_model-aod_aeronet))
@@ -38,7 +40,7 @@ function plot_result(plot_name,const,varargin)
         end
         
         set(gca,'FontSize',18)
-        export_fig(strcat('plots/',plot_name,'_',strjoin(varargin,'_')),'-png','-transparent')
+        %export_fig(strcat('plots/',plot_name,'_',strjoin(varargin,'_')),'-png','-transparent')
 
     elseif strcmp(plot_name,'overlay')
         Date = varargin{1};
@@ -49,7 +51,7 @@ function plot_result(plot_name,const,varargin)
         Method = varargin{6};
         cmap = varargin{7};
         
-        [aod_model, ~,~, ~, lon1,lat1] = load_aod(Date,Path,Orbit,Block,const,Method);
+        [aod_model, ~, ~, lon1,lat1] = load_aod(Date,Path,Orbit,Block,const,Method);
         [aod_aeronet, ~, ~, lon2,lat2] = load_aeronet(Date,Path,Block,Location,const);
         
         aod = [aod_model;aod_aeronet];

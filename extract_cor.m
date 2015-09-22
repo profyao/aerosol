@@ -1,30 +1,18 @@
-function [cor1,cor2,ratio] = extract_cor(reg,smart,scatter_type,x,y,band_ind,const)
-
-    x0 = ceil(x/const.RegScale);
-    y0 = ceil(y/const.RegScale);
+function [cor1,cor2,cor3,ratio] = extract_cor(reg,sample,xid,yid,const)
     
-    if strcmp(scatter_type,'SS')
-        rho = permute(reshape(smart.ss(:,x0,y0,:,band_ind,:),const.Model_OpticalDepthLen,const.Model_ComponentDim,const.Cam_Dim)...
-            ,[3,1,2]);
-    elseif strcmp(scatter_type,'MS')
-        rho = permute(reshape(smart.ms(:,x0,y0,:,band_ind,:),const.Model_OpticalDepthLen,const.Model_ComponentDim,const.Cam_Dim)...
-            ,[3,1,2]);
-    else
-        error('need to specify scattering type!\n')
-    end
-    
-    totdim = const.Model_OpticalDepthLen*const.Model_ComponentDim;
-
-    rho = reshape(rho,const.Cam_Dim,totdim);
-    L = reshape(reg.mean_equ_ref(x,y,band_ind,:),const.Cam_Dim,1);
-    top_eof = reshape(reg.eof(x,y,:,1),const.Cam_Dim,1);
-
-    cor1 = arrayfun(@(x) corr(rho(:,x),L), 1:totdim);
-    cor2 = nancov(top_eof,L)/(nanstd(top_eof)*nanstd(L));
-    ratio = arrayfun(@(x) norm(rho(:,x))/norm(L), 1:totdim);
-    
-    cor1 = reshape(cor1,[const.Model_OpticalDepthLen,const.Model_ComponentDim]);
-    ratio = reshape(ratio,[const.Model_OpticalDepthLen,const.Model_ComponentDim]);
-
+    valid = find(reg.reg_is_used);
+    [x,y] = ind2sub([const.XDim_r,const.YDim_r],valid);
+    id = ismember([x,y],[xid,yid],'rows');
+    tmp = reshape(reg.mean_equ_ref,[const.XDim_r*const.YDim_r,const.Band_Dim,const.Cam_Dim]);
+    tmp = reshape(tmp(valid,1,:),reg.num_reg_used,const.Cam_Dim)';
+    L = tmp(:,id); 
+    atm_path = squeeze(sample.atm_path(1:const.Cam_Dim,id,end));
+    surf = squeeze(sample.surf(1:const.Cam_Dim,id,end));
+    resid = squeeze(sample.resid(1:const.Cam_Dim,id,end));
+    num = sum(id);
+    cor1 = arrayfun(@(x) corr_nan(L(:,x),atm_path(:,x)), 1:num);
+    cor2 = arrayfun(@(x) corr_nan(atm_path(:,x),surf(:,x)), 1:num);
+    cor3 = arrayfun(@(x) corr_nan(L(:,x),resid(:,x)), 1:num);
+    ratio = arrayfun(@(x) norm_nan(atm_path(:,x))/norm_nan(L(:,x)), 1:num);
     
 end

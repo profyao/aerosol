@@ -34,9 +34,8 @@ function save2cache(Date,Path,Orbit,Block,const,varargin)
         par = varargin{nargin-5};
         
         file_name_result = strcat(dir_result,'/',Date,'_P',Path,'_O',Orbit,'_B',Block,'_',Method,const.str_kf{kf+1},const.str_dy{dy+1},const.str_par{par+1},'.mat');
-    else
-        fprintf('no sample is saved, so no need to specify options!\n')
     end
+
     
     for i = 6:nargin
         

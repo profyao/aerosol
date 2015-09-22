@@ -1,6 +1,6 @@
 function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,const,add_limit)
     
-    [~,reg,smart] = load_cache(Date,Path,Orbit,Block,const,'subreg','reg','smart');
+    [reg,smart] = load_cache(Date,Path,Orbit,Block,const,'reg','smart');
     
     if sum(reg.reg_is_used(:))==0
         error_flag = 1;
@@ -39,10 +39,14 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     
     % Dynamically determine component
     if dy == true
-        [const.Component_Particle,const.Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const);
+    %    [const.Component_Particle,const.Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const,false);
     end
     
-    iter = 10;
+    if strcmp(Method,'CD')
+        iter = 10;
+    else
+        iter = 20;
+    end
     %tau0_r = kron(tau0, ones(RegScale));
 	%current.tau = diag(tau0_r(x,y));
     current.tau = nanmean(tau0(:))*ones(reg.num_reg_used,1);
@@ -83,13 +87,16 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     sample.sigmasq(:,1) = current.sigmasq;
     
     % Initialize kappa
-    current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
-    %current.kappa = 8787;
+    if strcmp(Method,'CD-random-noprior')
+        current.kappa = 0;
+    else
+        current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
+    end
     sample.kappa = zeros(iter+1,1);
     sample.kappa(1) = current.kappa;
     
     sample.loglik = zeros(iter+1,1);
-    [sample.loglik(1),num] = log_lik(current,i,j);
+    [sample.loglik(1),num] = log_lik(current,i,j,const.Channel_Used,Method);
     
     fprintf('Round: %d, Log-lik: %.4e, active: %d \n',0,sample.loglik(1),num);
     
@@ -113,8 +120,12 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
 
             [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
                 delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, add_limit, const);
-
-            current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
+            
+            if strcmp(Method,'CD-random-noprior')
+                current.kappa = 0;
+            else
+                current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
+            end
 
             [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
                 i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, add_limit, const);
@@ -136,7 +147,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
             sample.atm_path(:,:,t+1) = current.atm_path;
             sample.surf(:,:,t+1) = current.surf;
 
-            [sample.loglik(t+1),num] = log_lik(current,i,j);
+            [sample.loglik(t+1),num] = log_lik(current,i,j,const.Channel_Used,Method);
             fprintf('Round: %d, Log-lik: %.4e, active: %d \n',t,sample.loglik(t+1),num);
 
         end    

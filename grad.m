@@ -38,8 +38,8 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
                       smoothl=0;smoothr=0;
                     end
 
-                    chisql = nansum(residl.^2 ./ sigmasq);       
-                    chisqr = nansum(residr.^2 ./ sigmasq);
+                    chisql = nansum(residl(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));       
+                    chisqr = nansum(residr(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));
 
                     g_v = (chisql-chisqr+smoothl-smoothr)/(taul-taur);
                     
@@ -100,8 +100,8 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
                             
                         else
 
-                            chisql = nansum(residl.^2 ./ sigmasq);       
-                            chisqr = nansum(residr.^2 ./ sigmasq);
+                            chisql = nansum(residl(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));       
+                            chisqr = nansum(residr(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));
 
                             g = (chisql-chisqr)/(thetal(c)-thetar(c));
                             

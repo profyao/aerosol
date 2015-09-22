@@ -1,4 +1,4 @@
-function [cor1,cor2,ratio,component] = extract_cor2(reg,smart,x,y,ExtCroSect,CompSSA,kf,const)
+function [cor1,cor2,ratio,component] = extract_cor2(regp,smartp,ExtCroSect,CompSSA,kf,const,add_limit)
     
     Model_ComponentDim = 21;
     theta_grid = eye(Model_ComponentDim);
@@ -8,17 +8,18 @@ function [cor1,cor2,ratio,component] = extract_cor2(reg,smart,x,y,ExtCroSect,Com
         for j = 1:Model_ComponentDim
             tau = const.Model_OpticalDepthGrid(i);
             theta = theta_grid(:,j);
-            atm_path(:,:,i,j) = get_model(tau,theta,x,y,ExtCroSect,CompSSA,smart,const);
+            [atm_path(:,:,i,j),~] = get_model(tau,theta,ExtCroSect,CompSSA,smartp,const,add_limit);
+
         end
     end
     
     totdim = const.Model_OpticalDepthLen*Model_ComponentDim;
     atm_path = reshape(atm_path,const.Cam_Dim, const.Band_Dim,totdim);
-    L = reshape(reg.mean_equ_ref(x,y,:,:),const.Band_Dim,const.Cam_Dim)';
+    L = regp.mean_equ_ref;
     if kf == true
-        top_eof = reshape(reg.eof(x,y,:,1),const.Cam_Dim,1);
+        top_eof = regp.eof(:,1);
     else
-        top_eof = reshape(reg.eof(x,y,:,:,1),const.Band_Dim,const.Cam_Dim)';
+        top_eof = reshape(regp.eof(:,:,1),const.Band_Dim,const.Cam_Dim)';
     end
     
     cor1p = NaN*ones(const.Band_Dim,totdim);

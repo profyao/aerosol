@@ -1,4 +1,4 @@
-function [Component_Particle,Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const)
+function [Component_Particle,Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const,add_limit)
 
     cor1 = zeros(reg.num_reg_used,const.Band_Dim);
     cor2 = zeros(reg.num_reg_used,const.Band_Dim);
@@ -8,7 +8,8 @@ function [Component_Particle,Component_Num] = find_mostlik_component(reg,smart,x
     const.Component_Num = length(const.Component_Particle);
     
     parfor p=1:reg.num_reg_used
-        [cor1(p,:),cor2(p,:),ratio(p,:),component(p,:)] = extract_cor2(reg,smart,x(p),y(p),ExtCroSect,CompSSA,kf,const);
+        [regp,smartp] = extract_pixel(x(p),y(p),reg,smart,const,kf);
+        [cor1(p,:),cor2(p,:),ratio(p,:),component(p,:)] = extract_cor2(regp,smartp,ExtCroSect,CompSSA,kf,const,add_limit);
     end
     
     sorted_table = sortrows(tabulate(component(:,1)),2);

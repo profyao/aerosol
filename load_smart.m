@@ -35,6 +35,11 @@ function smart = load_smart(Date,Path,Orbit,Block,const,add_limit)
         TdiffMS = hdfread(file_smart_tdiff, '/TMultipleScatter', 'Index', {[1  1  1  1  1],[1  1  1  1  1],[4  21  13   2  29]});            
         TdiffSS = exp(double(TdiffSS/1000));
         TdiffMS = exp(double(TdiffMS/1000));
+        
+        smart.ss_tdiff = NaN*ones(const.Model_OpticalDepthLen, const.XDim_r17600,const.YDim_r17600, const.Model_ComponentDim, const.Band_Dim, const.Cam_Dim);
+        smart.ss_ediff = NaN*ones(const.Model_OpticalDepthLen, const.XDim_r17600,const.YDim_r17600, const.Model_ComponentDim, const.Band_Dim);
+        smart.ms_tdiff = NaN*ones(const.Model_OpticalDepthLen, const.XDim_r17600,const.YDim_r17600, const.Model_ComponentDim, const.Band_Dim, const.Cam_Dim);
+        smart.ms_ediff = NaN*ones(const.Model_OpticalDepthLen, const.XDim_r17600,const.YDim_r17600, const.Model_ComponentDim, const.Band_Dim);
 
     end
     
@@ -139,51 +144,52 @@ function smart = load_smart(Date,Path,Orbit,Block,const,add_limit)
                     end
                 end
                 
-                
-                % Load diffuse irradiance at the bottom of the atmosphere
-                SS = EdiffSS(:,:,:,:,[mu0_ind-1,mu0_ind]);
-                MS = EdiffMS(:,:,:,:,[mu0_ind-1,mu0_ind]);
-                [x1,x2,x3] = ndgrid(const.Model_OpticalDepthGrid, const.Model_Pressure, const.Model_mu0Grid([mu0_ind-1,mu0_ind]));
-                for kk = 1:const.Model_ComponentDim
-                    for band  = 1:const.Band_Dim %opt_depth x pressure x mu x 
-                        smart.ss_ediff(:, kk, band) = interpn(x1,x2,x3,squeeze(SS(band, kk,:,:,:)),...
-                            const.Model_OpticalDepthGrid, surface_pressure, mu0);
-                        smart.ms_ediff(:, kk, band) = interpn(x1,x2,x3,squeeze(MS(band, kk,:,:,:)),...
-                            const.Model_OpticalDepthGrid, surface_pressure, mu0);
-                    end
-                end
-                
-                % build up data set for different cams
-
-                ss_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
-                length(const.Model_Pressure), 2);
-                ms_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
-                length(const.Model_Pressure), 2);
-
-                for cam = 1:const.Cam_Dim
-                    ss_cam(cam,:,:,:,:,:) = TdiffSS(:,:,:,:,[mu_ind(cam)-1,mu_ind(cam)]);
-                    ms_cam(cam,:,:,:,:,:) = TdiffMS(:,:,:,:,[mu_ind(cam)-1,mu_ind(cam)]);      
-                end
-
-                for cam = 1:const.Cam_Dim    
-                    [x1,x2,x3] = ndgrid(const.Model_OpticalDepthGrid, const.Model_Pressure, const.Model_muGrid([mu_ind(cam)-1,mu_ind(cam)]));
+                if add_limit == true
+                    % Load diffuse irradiance at the bottom of the atmosphere
+                    SS = EdiffSS(:,:,:,:,[mu0_ind-1,mu0_ind]);
+                    MS = EdiffMS(:,:,:,:,[mu0_ind-1,mu0_ind]);
+                    [x1,x2,x3] = ndgrid(const.Model_OpticalDepthGrid, const.Model_Pressure, const.Model_mu0Grid([mu0_ind-1,mu0_ind]));
                     for kk = 1:const.Model_ComponentDim
-                        for band = 1:const.Band_Dim
-                            smart.ss_tdiff(:, kk, band, cam)=interpn(x1,x2,x3, squeeze(ss_cam(cam,band,kk,:,:,:)),...
-                                const.Model_OpticalDepthGrid, surface_pressure, mu(cam));
-                            smart.ms_tdiff(:, kk, band, cam)=interpn(x1,x2,x3, squeeze(ms_cam(cam,band,kk,:,:,:)),...
-                                const.Model_OpticalDepthGrid, surface_pressure, mu(cam));
-
+                        for band  = 1:const.Band_Dim %opt_depth x pressure x mu x 
+                            smart.ss_ediff(:, ii,jj, kk, band) = interpn(x1,x2,x3,squeeze(SS(band, kk,:,:,:)),...
+                                const.Model_OpticalDepthGrid, surface_pressure, mu0);
+                            smart.ms_ediff(:, ii,jj, kk, band) = interpn(x1,x2,x3,squeeze(MS(band, kk,:,:,:)),...
+                                const.Model_OpticalDepthGrid, surface_pressure, mu0);
                         end
                     end
 
+                    % build up data set for different cams
+
+                    ss_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
+                    length(const.Model_Pressure), 2);
+                    ms_cam = NaN * ones(const.Cam_Dim, const.Band_Dim, const.Model_ComponentDim, const.Model_OpticalDepthLen,...
+                    length(const.Model_Pressure), 2);
+
+                    for cam = 1:const.Cam_Dim
+                        ss_cam(cam,:,:,:,:,:) = TdiffSS(:,:,:,:,[mu_ind(cam)-1,mu_ind(cam)]);
+                        ms_cam(cam,:,:,:,:,:) = TdiffMS(:,:,:,:,[mu_ind(cam)-1,mu_ind(cam)]);      
+                    end
+
+                    for cam = 1:const.Cam_Dim    
+                        [x1,x2,x3] = ndgrid(const.Model_OpticalDepthGrid, const.Model_Pressure, const.Model_muGrid([mu_ind(cam)-1,mu_ind(cam)]));
+                        for kk = 1:const.Model_ComponentDim
+                            for band = 1:const.Band_Dim
+                                smart.ss_tdiff(:, ii,jj,kk, band, cam)=interpn(x1,x2,x3, squeeze(ss_cam(cam,band,kk,:,:,:)),...
+                                    const.Model_OpticalDepthGrid, surface_pressure, mu(cam));
+                                smart.ms_tdiff(:, ii,jj,kk, band, cam)=interpn(x1,x2,x3, squeeze(ms_cam(cam,band,kk,:,:,:)),...
+                                    const.Model_OpticalDepthGrid, surface_pressure, mu(cam));
+
+                            end
+                        end
+
+                    end
                 end
 
                 smart.mu0(ii,jj) = mu0;
                 smart.mu(ii,jj,:) = mu;
                 smart.scatter_angle(ii,jj,:) = scatter_angle;
             else
-                fprintf('%d,%d: not heterogeneous region!\n',ii,jj)
+                %fprintf('%d,%d: not heterogeneous region!\n',ii,jj)
             end    
         end
     end 

@@ -12,8 +12,8 @@ function [atm_path,surf,resid] = update_resid(current, x, y, smart, reg, ExtCroS
         taup = current.tau(p);
         
         [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,kf);
-        
-        [atm_path(:,p),surf(:,p),resid(:,p)] = get_resid(taup,thetap,xp,yp,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+
+        [atm_path(:,p),surf(:,p),resid(:,p)] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
     end
 
 end

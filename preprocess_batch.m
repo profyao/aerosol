@@ -9,9 +9,9 @@ function preprocess_batch(Location,const,add_limit)
     Orbits = NUM(id+1,4);
     Blocks = NUM(id+1,5);
     
-    N = length(Dates);
+    %N = length(Dates);
     
-    parfor i = 7:N
+    parfor i = [8,9,11,12,14]
         
         Date = Dates{i};
         Path = Paths(i);

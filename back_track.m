@@ -1,4 +1,4 @@
-function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,smartp,ExtCroSect,CompSSA,const,varargin)
+function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit,varargin)
     
       
     switch var_str
@@ -30,8 +30,8 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                         new_smooth=0;smooth=0;
                     end
 
-                    new_chisq = nansum(new_residp.^2 ./ sigmasq);       
-                    chisq = nansum(residp.^2 ./ sigmasq);
+                    new_chisq = nansum(new_residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));       
+                    chisq = nansum(residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));
 
                     if new_chisq+new_smooth < chisq+smooth
                         new_var = new_taup;
@@ -71,8 +71,8 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                     [~,~,new_residp] = get_resid(taup,new_thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
 
 
-                    new_chisq = nansum(new_residp.^2 ./ sigmasq);       
-                    chisq = nansum(residp.^2 ./ sigmasq);
+                    new_chisq = nansum(new_residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));       
+                    chisq = nansum(residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));
 
                     if new_chisq < chisq
                         new_var = new_thetap;

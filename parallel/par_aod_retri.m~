@@ -1,6 +1,6 @@
-function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,const)
+function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,const,add_limit)
     
-    [~,reg,smart] = load_cache(Date,Path,Orbit,Block,const,'subreg','reg','smart');
+    [reg,smart] = load_cache(Date,Path,Orbit,Block,const,'reg','smart');
     
     if sum(reg.reg_is_used(:))==0
         error_flag = 1;
@@ -28,23 +28,6 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     CompSSA = hdfread(file_aerosol, '/Component Particle Information/Data Table', 'Fields', ...
         'Spectral single scattering albedo', 'FirstRecord',1 ,'NumRecords', const.Model_ComponentDim);
     CompSSA = CompSSA{1};
-    
-    if strcmp(Method,'MISR')
-        CompModNum = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
-    'Component model number', 'FirstRecord', 1,'NumRecords', const.Model.MixtureDim);
-        MixSSA = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
-    'Mixture spectral single scattering albedo', 'FirstRecord', 1 ,'NumRecords', const.Model.MixtureDim);
-        CompFrac = hdfread(file_aerosol, '/Mixture Information/Component Fractional Spectral Optical Depth', ...
-    'Index', {[1  1  1],[1  1  1],[const.Band.Dim   const.Model.NumComponent  const.Model.MixtureDim]});
-        
-        for mixture = 1:const.Model_MixtureDim
-            for tau = const.Model.OpticalDepthFinerGrid
-                const.Component_Particle = int8(CompModNum(:, mixture));
-                const.Component_Num = length(const.Component_Particle);
-                
-            end
-        end
-    end
             
     [x,y] = find(reg.reg_is_used);
     
@@ -56,10 +39,10 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     
     % Dynamically determine component
     if dy == true
-        [const.Component_Particle,const.Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const);
+    %    [const.Component_Particle,const.Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const,false);
     end
     
-    iter = 10;
+    iter = 20;
     %tau0_r = kron(tau0, ones(RegScale));
 	%current.tau = diag(tau0_r(x,y));
     current.tau = nanmean(tau0(:))*ones(reg.num_reg_used,1);
@@ -86,7 +69,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     sample.theta = zeros(const.Component_Num, reg.num_reg_used, iter+1);
     sample.theta(:,:,1) = current.theta;
     
-    [current.atm_path,current.surf,current.resid] = update_resid(current, x, y, smart, reg, ExtCroSect, CompSSA, kf, const);
+    [current.atm_path,current.surf,current.resid] = update_resid(current, x, y, smart, reg, ExtCroSect, CompSSA, kf, add_limit, const);
     sample.atm_path = zeros(const.NChannel,reg.num_reg_used,iter+1);
     sample.surf = zeros(const.NChannel,reg.num_reg_used,iter+1);
     sample.resid = zeros(const.NChannel,reg.num_reg_used,iter+1);
@@ -100,49 +83,65 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     sample.sigmasq(:,1) = current.sigmasq;
     
     % Initialize kappa
+    if strcmp(Method,'no-prior')
+        current.kappa = 0;
+
     current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
-    %current.kappa = 8787;
     sample.kappa = zeros(iter+1,1);
     sample.kappa(1) = current.kappa;
     
     sample.loglik = zeros(iter+1,1);
-    [sample.loglik(1),num] = log_lik(current,i,j);
+    [sample.loglik(1),num] = log_lik(current,i,j,const.Channel_Used);
     
     fprintf('Round: %d, Log-lik: %.4e, active: %d \n',0,sample.loglik(1),num);
-
-    for t = 1: iter
-        %clf
-        %show(sample,reg,2,1,t,jet(256),const)   
-        %M=getframe;
-
-        [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
-            delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, const);
+    
+    if strcmp(Method,'MISR')
         
-        current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
-
-        [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
-            i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, const);
+        CompModNum = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
+    'Component model number', 'FirstRecord', 1,'NumRecords', const.Model.MixtureDim);
+        MixSSA = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
+    'Mixture spectral single scattering albedo', 'FirstRecord', 1 ,'NumRecords', const.Model.MixtureDim);
+        CompFrac = hdfread(file_aerosol, '/Mixture Information/Component Fractional Spectral Optical Depth', ...
+    'Index', {[1  1  1],[1  1  1],[const.Band.Dim   const.Model.NumComponent  const.Model.MixtureDim]});
         
-        if strcmp(Method,'MCMC')
-            current.alpha = sample_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used);
-            sample.alpha(:,t+1) = current.alpha;
-        end
-
-        current.sigmasq = update_sigmasq(current.resid,Method);
+        sample = par_aod_retr_search(x,y,reg,smart,CompModNum,MixSSA,CompFrac,ExtCroSect,const,add_limit);
         
-        [current.atm_path,current.surf,~] = update_resid(current, x, y, smart, reg, ExtCroSect, CompSSA, kf, const);
+    else
 
-        sample.tau(:,t+1) = current.tau;
-        sample.kappa(t+1) = current.kappa;
-        sample.theta(:,:,t+1) = current.theta;
-        sample.sigmasq(:,t+1) = current.sigmasq;
-        sample.resid(:,:,t+1) = current.resid;
-        sample.atm_path(:,:,t+1) = current.atm_path;
-        sample.surf(:,:,t+1) = current.surf;
-        
-        [sample.loglik(t+1),num] = log_lik(current,i,j);
-        fprintf('Round: %d, Log-lik: %.4e, active: %d \n',t,sample.loglik(t+1),num);
+        for t = 1: iter
+            %clf
+            %show(sample,reg,2,1,t,jet(256),const)   
+            %M=getframe;
 
-    end    
+            [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
+                delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, add_limit, const);
+
+            current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);   
+
+            [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
+                i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, add_limit, const);
+
+            if strcmp(Method,'MCMC')
+                current.alpha = sample_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used);
+                sample.alpha(:,t+1) = current.alpha;
+            end
+
+            current.sigmasq = update_sigmasq(current.resid,Method);
+
+            [current.atm_path,current.surf,~] = update_resid(current, x, y, smart, reg, ExtCroSect, CompSSA, kf, add_limit, const);
+
+            sample.tau(:,t+1) = current.tau;
+            sample.kappa(t+1) = current.kappa;
+            sample.theta(:,:,t+1) = current.theta;
+            sample.sigmasq(:,t+1) = current.sigmasq;
+            sample.resid(:,:,t+1) = current.resid;
+            sample.atm_path(:,:,t+1) = current.atm_path;
+            sample.surf(:,:,t+1) = current.surf;
+
+            [sample.loglik(t+1),num] = log_lik(current,i,j,const.Channel_Used);
+            fprintf('Round: %d, Log-lik: %.4e, active: %d \n',t,sample.loglik(t+1),num);
+
+        end    
+    end
 
 end

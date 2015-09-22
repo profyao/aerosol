@@ -1,4 +1,4 @@
-function [aod,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,const,Opt)
+function [aod,theta,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,const,Opt)
     
     try
         [lon,lat] = get_coord(Path,Block,const);
@@ -6,21 +6,11 @@ function [aod,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,const,Opt)
             
         if strcmp(Opt,'MISR')
             
-            dir_aerosol = fullfile('products/MIL2ASAE/',Date);
-            file_aerosol = strcat(dir_aerosol,'/',const.header_MIL2ASAE_filename,num2str(Path,'%03d'),'_O',num2str(Orbit,'%06d'),'_F12_0022.hdf');
-            tau0 = hdfread(file_aerosol, 'RegParamsAlgDiagnostics', 'Fields', 'RegMeanSpectralOptDepth', ...
-        'Index',{[Block  1  1  const.Band_Green],[1  1  1  1],[1  const.XDim_r17600  const.YDim_r17600  1]});
-            tau0 = double(tau0);
-            tau0_2d = kron(tau0, ones(const.RegScale)); 
-            valid = tau0_2d ~= -9999;
-            aod = tau0_2d(valid);
-            [xid,yid] = ind2sub([const.XDim_r, const.YDim_r],find(valid));
-            lon = lon(valid);
-            lat=lat(valid);
-            fprintf('MISR AOD from %s is loaded!\n',file_aerosol)
+            [aod,theta,xid,yid,valid] = load_MISR(Date,Path,Orbit,Block,const);
+            lon = lon(valid);lat=lat(valid);
             return
 
-        elseif strcmp(Opt,'CD-random') || strcmp(Opt,'MCMC') || strcmp(Opt,'CD')
+        elseif strcmp(Opt,'CD-random') || strcmp(Opt,'MCMC') || strcmp(Opt,'CD') || strcmp(Opt,'CD-random-noprior')
 
             [reg,sample] = load_cache(Date,Path,Orbit,Block,const,'reg','sample',Opt,0,0,1); %Method,kf,dy,par
             
@@ -49,19 +39,26 @@ function [aod,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,const,Opt)
         if strcmp(Opt,'MCMC')
             iter = size(sample.tau,2);
             aod = mean(sample.tau(:,ceil(iter/2):end),2);
+            theta = squeeze(mean(sample.theta(:,:,ceil(iter/2):end),3));
         else
             aod = sample.tau(:,end);
+            theta = squeeze(sample.theta(:,:,end));
         end
 
         lon = lon(reg.reg_is_used);
         lat = lat(reg.reg_is_used);
         
+        %varargout{1} = reg;
+        %varargout{2} = sample;
+        
     catch
         aod = [];
+        theta = [];
         xid = [];
         yid =[];
         lon = [];
         lat = [];
+        %varargout={};
     end
     
 end

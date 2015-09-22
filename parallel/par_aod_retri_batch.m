@@ -9,14 +9,25 @@ function par_aod_retri_batch(Method,Location,kf,dy,par,const,add_limit)
     Orbits = NUM(id+1,4);
     Blocks = NUM(id+1,5);
     
-    N = length(Dates);
+    %components = [12    6    4   19   18   10    3   16;
+    %    8    9   14   10    2   16   19    3;
+    %     7    4    2   19   18   16   10   21;
+    %     19   13   15   14    2    8    9    3;
+    %     13   19   15    2    8    9   14    3;
+    %     1   19   15    9   14    8    2    3;];
     
-    for i = 1:N
+    %N = length(Dates);
+    
+    cnt = 1;
+    for i = [8,9,11,12,14]
         
         Date = Dates{i};
         Path = Paths(i);
         Orbit = Orbits(i);
         Block = Blocks(i);
+        
+        %const.Component_Particle = components(cnt,:);
+        %const.Component_Num = length(const.Component_Particle);
         
         [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,const,add_limit);
         
@@ -26,6 +37,8 @@ function par_aod_retri_batch(Method,Location,kf,dy,par,const,add_limit)
         else
             save2cache(Date,Path,Orbit,Block,const,sample,Method,kf,dy,par)
         end
+        
+        cnt = cnt + 1;
 
     end
 
