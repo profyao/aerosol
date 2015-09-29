@@ -1,4 +1,4 @@
-function par_aod_retri_batch(Method,Location,kf,dy,par,const,add_limit)
+function par_aod_retri_batch(Method,Location,kf,dy,par,core,const,add_limit)
     
     [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
     
@@ -18,18 +18,13 @@ function par_aod_retri_batch(Method,Location,kf,dy,par,const,add_limit)
     
     %N = length(Dates);
     
-    cnt = 1;
     for i = [8,9,11,12,14]
-        
         Date = Dates{i};
         Path = Paths(i);
         Orbit = Orbits(i);
         Block = Blocks(i);
         
-        %const.Component_Particle = components(cnt,:);
-        %const.Component_Num = length(const.Component_Particle);
-        
-        [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,const,add_limit);
+        [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,core,const,add_limit,0.05);
         
         if (error_flag == 1)
             fprintf(strcat(Date,'_P',num2str(Path,'%03d'),'_O',num2str(Orbit,'%06d'),'_B',num2str(Block),' is skipped!\n'))
@@ -38,8 +33,6 @@ function par_aod_retri_batch(Method,Location,kf,dy,par,const,add_limit)
             save2cache(Date,Path,Orbit,Block,const,sample,Method,kf,dy,par)
         end
         
-        cnt = cnt + 1;
-
     end
 
 end

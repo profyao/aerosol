@@ -11,7 +11,7 @@ function preprocess_batch(Location,const,add_limit)
     
     %N = length(Dates);
     
-    parfor i = [8,9,11,12,14]
+    for i = [8,9,11,12,14]
         
         Date = Dates{i};
         Path = Paths(i);

@@ -1,4 +1,4 @@
-function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,const,add_limit)
+function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,core,const,add_limit,delta)
     
     [reg,smart] = load_cache(Date,Path,Orbit,Block,const,'reg','smart');
     
@@ -43,7 +43,9 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     end
     
     if strcmp(Method,'CD')
-        iter = 10;
+        iter = 5;
+    elseif strcmp(Method,'MCMC')
+        iter = 20;
     else
         iter = 20;
     end
@@ -51,94 +53,99 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
 	%current.tau = diag(tau0_r(x,y));
     current.tau = nanmean(tau0(:))*ones(reg.num_reg_used,1);
     
-    delta = 0.05;
-    sample.tau = zeros(reg.num_reg_used, iter+1);
-    sample.tau(:,1) = current.tau;
-    
+    %delta = 0.05;
+
     if strcmp(Method,'MCMC')
-        current.alpha = ones(const.Component_Num,1);     
-        sample.alpha = zeros(const.Component_Num, iter+1);
-        sample.alpha(:,1) = current.alpha;
-    
+        current.alpha = ones(const.Component_Num,1);                 
         for jj = 1:reg.num_reg_used
             z = gamrnd(current.alpha, 1);
             current.theta(:, jj) = z/sum(z);
-        end
-        
+        end      
     else
         current.alpha = ones(const.Component_Num,1); % only useful in MCMC 
         current.theta = 1/const.Component_Num * ones(const.Component_Num,reg.num_reg_used);
     end
-
-    sample.theta = zeros(const.Component_Num, reg.num_reg_used, iter+1);
-    sample.theta(:,:,1) = current.theta;
     
-    [current.atm_path,current.surf,current.resid] = update_resid(current, x, y, smart, reg, ExtCroSect, CompSSA, kf, add_limit, const);
-    sample.atm_path = zeros(const.NChannel,reg.num_reg_used,iter+1);
-    sample.surf = zeros(const.NChannel,reg.num_reg_used,iter+1);
-    sample.resid = zeros(const.NChannel,reg.num_reg_used,iter+1);
-
-    sample.atm_path(:,:,1) = current.atm_path;
-    sample.surf(:,:,1) = current.surf;
-    sample.resid(:,:,1) = current.resid;
-    
+    [current.atm_path,current.surf,current.resid] = par_update_resid(current.tau,current.theta, x, y, smart, reg, ExtCroSect, CompSSA, kf, par,core,add_limit, const);    
     current.sigmasq = update_sigmasq(current.resid,Method);
-    sample.sigmasq = zeros(const.NChannel, iter+1);
-    sample.sigmasq(:,1) = current.sigmasq;
-    
+       
     % Initialize kappa
     if strcmp(Method,'CD-random-noprior')
         current.kappa = 0;
     else
         current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
     end
-    sample.kappa = zeros(iter+1,1);
-    sample.kappa(1) = current.kappa;
     
-    sample.loglik = zeros(iter+1,1);
-    [sample.loglik(1),num] = log_lik(current,i,j,const.Channel_Used,Method);
+    if strcmp(Method,'MCMC')
+           
+        sample.tau = zeros(reg.num_reg_used, iter+1);
+        sample.tau(:,1) = current.tau;
+        sample.alpha = zeros(const.Component_Num, iter+1);
+        sample.alpha(:,1) = current.alpha;
+        sample.theta = zeros(const.Component_Num, reg.num_reg_used, iter+1);
+        sample.theta(:,:,1) = current.theta;
+
+        sample.atm_path = zeros(const.NChannel,reg.num_reg_used,iter+1);
+        sample.surf = zeros(const.NChannel,reg.num_reg_used,iter+1);
+        sample.resid = zeros(const.NChannel,reg.num_reg_used,iter+1);
+
+        sample.atm_path(:,:,1) = current.atm_path;
+        sample.surf(:,:,1) = current.surf;
+        sample.resid(:,:,1) = current.resid;
+
+        sample.sigmasq = zeros(const.NChannel, iter+1);
+        sample.sigmasq(:,1) = current.sigmasq;
+
+        sample.kappa = zeros(iter+1,1);
+        sample.kappa(1) = current.kappa;
+        
+    end
     
-    fprintf('Round: %d, Log-lik: %.4e, active: %d \n',0,sample.loglik(1),num);
+    %sample.loglik = zeros(iter+1,1);
+    %[sample.loglik(1),num] = log_lik(current,i,j,const.Channel_Used,Method);
     
-    if strcmp(Method,'MISR')
+    %fprintf('Round: %d, Log-lik: %.4e, active: %d \n',0,sample.loglik(1),num);
+    
+    %if strcmp(Method,'MISR')
         
-        CompModNum = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
-    'Component model number', 'FirstRecord', 1,'NumRecords', const.Model.MixtureDim);
-        MixSSA = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
-    'Mixture spectral single scattering albedo', 'FirstRecord', 1 ,'NumRecords', const.Model.MixtureDim);
-        CompFrac = hdfread(file_aerosol, '/Mixture Information/Component Fractional Spectral Optical Depth', ...
-    'Index', {[1  1  1],[1  1  1],[const.Band.Dim   const.Model.NumComponent  const.Model.MixtureDim]});
+    %    CompModNum = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
+    %'Component model number', 'FirstRecord', 1,'NumRecords', const.Model.MixtureDim);
+    %    MixSSA = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
+    %'Mixture spectral single scattering albedo', 'FirstRecord', 1 ,'NumRecords', const.Model.MixtureDim);
+    %    CompFrac = hdfread(file_aerosol, '/Mixture Information/Component Fractional Spectral Optical Depth', ...
+    %'Index', {[1  1  1],[1  1  1],[const.Band.Dim   const.Model.NumComponent  const.Model.MixtureDim]});
         
-        sample = par_aod_retr_search(x,y,reg,smart,CompModNum,MixSSA,CompFrac,ExtCroSect,const,add_limit);
+    %    sample = par_aod_retr_search(x,y,reg,smart,CompModNum,MixSSA,CompFrac,ExtCroSect,const,add_limit);
         
-    else
+    %else
 
-        for t = 1: iter
-            %clf
-            %show(sample,reg,2,1,t,jet(256),const)   
-            %M=getframe;
+    for t = 1: iter
+        %clf
+        %show(sample,reg,2,1,t,jet(256),const)   
+        %M=getframe;
 
-            [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
-                delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, add_limit, const);
-            
-            if strcmp(Method,'CD-random-noprior')
-                current.kappa = 0;
-            else
-                current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
-            end
+        [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
+            delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, core, add_limit, const);
 
-            [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
-                i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, add_limit, const);
+        if strcmp(Method,'CD-random-noprior')
+            current.kappa = 0;
+        else
+            current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
+        end
 
-            if strcmp(Method,'MCMC')
-                current.alpha = sample_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used);
-                sample.alpha(:,t+1) = current.alpha;
-            end
+        [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
+            i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, core, add_limit, const);
 
-            current.sigmasq = update_sigmasq(current.resid,Method);
+        if strcmp(Method,'MCMC')
+            current.alpha = sample_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used);
+            sample.alpha(:,t+1) = current.alpha;
+        end
 
-            [current.atm_path,current.surf,~] = update_resid(current, x, y, smart, reg, ExtCroSect, CompSSA, kf, add_limit, const);
+        current.sigmasq = update_sigmasq(current.resid,Method);
 
+        [current.atm_path,current.surf,~] = par_update_resid(current.tau,current.theta, x, y, smart, reg, ExtCroSect, CompSSA, kf, par,core,add_limit, const);
+        
+        if strcmp(Method,'MCMC')
             sample.tau(:,t+1) = current.tau;
             sample.kappa(t+1) = current.kappa;
             sample.theta(:,:,t+1) = current.theta;
@@ -146,11 +153,17 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
             sample.resid(:,:,t+1) = current.resid;
             sample.atm_path(:,:,t+1) = current.atm_path;
             sample.surf(:,:,t+1) = current.surf;
+        end
+        
+        %[sample.loglik(t+1),num] = log_lik(current,i,j,const.Channel_Used,Method);
+        %fprintf('Round: %d, Log-lik: %.4e, active: %d \n',t,sample.loglik(t+1),num);
+        fprintf('.');
 
-            [sample.loglik(t+1),num] = log_lik(current,i,j,const.Channel_Used,Method);
-            fprintf('Round: %d, Log-lik: %.4e, active: %d \n',t,sample.loglik(t+1),num);
-
-        end    
+    end    
+    %end
+    
+    if ~strcmp(Method,'MCMC')
+        sample = current;
     end
 
 end

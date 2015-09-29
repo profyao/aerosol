@@ -183,11 +183,12 @@ function smart = load_smart(Date,Path,Orbit,Block,const,add_limit)
                         end
 
                     end
-                end
-
-                smart.mu0(ii,jj) = mu0;
-                smart.mu(ii,jj,:) = mu;
-                smart.scatter_angle(ii,jj,:) = scatter_angle;
+                    
+                    smart.mu0(ii,jj) = mu0;
+                    smart.mu(ii,jj,:) = mu;
+                    smart.scatter_angle(ii,jj,:) = scatter_angle;
+                    
+                end                
             else
                 %fprintf('%d,%d: not heterogeneous region!\n',ii,jj)
             end    

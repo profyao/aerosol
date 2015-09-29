@@ -48,9 +48,9 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
                     end
                     
                     if cnt > max_iter
+                        fprintf('cannot converge to gradient within %d iterations! delta %s: %e, last grad: %e, curret grad: %e!\n',max_iter,var_str,delta_tau,g0,g_v)
                         g_v = 0;
                         flag = 0;
-                        fprintf('cannot converge to gradient within %d iterations! delta %s: %e!\n',max_iter,var_str,delta_tau)
                         break
                     end
                     
@@ -110,9 +110,9 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
                             end   
                             
                             if cnt > max_iter
+                                fprintf('cannot converge to gradient within %d iterations! delta %s: %e, last grad: %e, curret grad: %e!\n',max_iter,var_str,delta_theta,g0,g)
                                 g_v(c) = 0;
                                 flag(c) = 0;
-                                fprintf('cannot converge to gradient within %d iterations! delta %s: %e!\n',max_iter,var_str,delta_theta)
                                 break
                             end
 

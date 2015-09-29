@@ -41,7 +41,7 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                     if cnt > max_iter
                         new_var = taup;
                         new_residp = residp;
-                        fprintf('cannot achieve descent within %d iterations! %s: %e\n',max_iter,var_str,lambda);
+                        fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq+smooth,new_chisq+new_smooth);
                         break
                     end
 
@@ -82,7 +82,7 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                     if cnt > max_iter
                         new_var = thetap;
                         new_residp = residp;
-                        fprintf('cannot achieve descent within %d iterations! %s: %e!\n',max_iter,var_str,lambda);
+                        fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq,new_chisq);
                         break
                     end
 
