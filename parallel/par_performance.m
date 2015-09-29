@@ -32,7 +32,7 @@ function [cores,t] = par_performance(server,Method,Location,const)
         end
         
         %profile on
-        f = @() par_aod_retri_batch(Method,Location,0,0,par,core,const,0,0.05);
+        f = @() par_aod_retri_batch(Method,Location,0,0,par,core,const,0);
         t(i) = timeit(f);
         %p = profile('info');
         %profile off
