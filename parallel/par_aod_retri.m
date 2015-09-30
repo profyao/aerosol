@@ -118,6 +118,9 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     %    sample = par_aod_retr_search(x,y,reg,smart,CompModNum,MixSSA,CompFrac,ExtCroSect,const,add_limit);
         
     %else
+    
+    [current.loglik,num] = log_lik(current,i,j,const.Channel_Used,Method);
+    fprintf('Round: 0, Log-lik: %.4e, active: %d \n',current.loglik,num);
 
     for t = 1: iter
         %clf
@@ -161,6 +164,9 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
 
     end    
     %end
+    
+    [current.loglik,num] = log_lik(current,i,j,const.Channel_Used,Method);
+    fprintf('\nRound: %d, Log-lik: %.4e, active: %d \n',t,current.loglik,num);
     
     if ~strcmp(Method,'MCMC')
         sample = current;
