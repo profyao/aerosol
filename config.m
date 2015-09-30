@@ -12,8 +12,6 @@ const.header_MIANCAGP_url1 = 'ftp://l5eil01.larc.nasa.gov/MISR/MIANCAGP.001/1999
 const.header_MIANCAGP_url2 = 'ftp://l5eil01.larc.nasa.gov/MISR/MIANCAGP.001/1999.11.08/';
 const.header_MIANCAGP_filename = 'MISR_AM1_AGP_P';
 
-addpath(genpath('~/projects/aerosol/src'));
-
 % MISR cameras parameters
 const.Cam_DF = 1;
 const.Cam_CF = 2;
