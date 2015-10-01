@@ -2,13 +2,13 @@ function [aod, xid, yid, lon_a,lat_a] = load_aeronet(Date,Path,Block,Location,co
     
     [lon,lat] = get_coord(Path,Block,const);
 
-    file_aeronet = fullfile('aeronet/processed',Location, [Date,'_aeronet.csv']);
+    file_aeronet = fullfile('aeronet/processed2',Location, [Date,'_aeronet.csv']);
     
     try
         aeronet = csvread(file_aeronet,1,1);
         lon_a = aeronet(:,1);
         lat_a = aeronet(:,2);
-        aod = aeronet(:,3);
+        aod = aeronet(:,3:6);
 
         X = double([lon(:),lat(:)]);
         tri = delaunayn(X);

@@ -41,7 +41,7 @@ function [aod,theta,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,const,Opt)
             aod = mean(sample.tau(:,ceil(iter/2):end),2);
             theta = squeeze(mean(sample.theta(:,:,ceil(iter/2):end),3));
         else
-            aod = sample.tau;
+            aod = sample.tau_4band;
             theta = sample.theta;
         end
 

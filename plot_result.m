@@ -1,6 +1,7 @@
 function plot_result(plot_name,const,varargin)
     
-    cols = const.cols;
+    %cols = const.cols;
+    cols = [0,0,1; 0,1,0; 1,0,0;1, 165/255, 0];
     
     if ~exist('plots','dir')
         mkdir('plots')
@@ -9,38 +10,46 @@ function plot_result(plot_name,const,varargin)
     
     if strcmp(plot_name,'scatter')
         Location = varargin{1};
-        aod_max = 0;
         
         if nargin<4
             error('not enough args for scatter plot!\n')
         else
             figure
-            for p = 2:length(varargin)
-                [aod_model,aod_aeronet] = load_aod_batch(Location,const,varargin{p});
-                aod_max = max([aod_max;aod_model;aod_aeronet]);
-                h = scatter(aod_aeronet,aod_model,'MarkerEdgeColor',cols(p-1,:),'MarkerFaceColor',cols(p-1,:));
-                fprintf('correlation with aeronet is %f\n',corr(aod_model,aod_aeronet))
-                fprintf('rms is %f\n',norm(aod_model-aod_aeronet)/sqrt(length(aod_model)))
-                fprintf('avg bias is %f\n',mean(aod_model-aod_aeronet))
-                hold on
+            for band = 1:const.Band_Dim
+                aod_max = 0;
+                subplot(2,2,band)
+                for p = 2:length(varargin)
+                    [aod_model,aod_aeronet] = load_aod_batch(Location,const,varargin{p});
+                    aod_model_band = aod_model(:,band);
+                    aod_aeronet_band = aod_aeronet(:,band);
+                    aod_max = max([aod_max;aod_model_band;aod_aeronet_band]);
+                    h = scatter(aod_aeronet_band,aod_model_band,'MarkerEdgeColor',cols(band,:),'MarkerFaceColor',cols(band,:));
+                    fprintf('correlation with aeronet is %f\n',corr(aod_model_band,aod_aeronet_band))
+                    fprintf('rms is %f\n',norm(aod_model_band-aod_aeronet_band)/sqrt(length(aod_model_band)))
+                    fprintf('avg bias is %f\n',mean(aod_model_band-aod_aeronet_band))
+                    hold on
+                end
+                aod_max_lim = 1.05*aod_max;
+                xlim([0,aod_max_lim]),ylim([0,aod_max_lim])
+                %currentunits = get(gca,'Units');
+                %set(gca, 'Units', 'Points');
+                %axpos = get(gca,'Position');
+                %set(gca, 'Units', currentunits);
+                %markerWidth = 0.01/diff(xlim)*axpos(3); % Calculate Marker width in points
+                %set(h, 'SizeData', markerWidth^2)
+                set(h,'SizeData',25)
+                line('XData', [0 aod_max_lim], 'YData', [0 aod_max_lim], 'LineStyle', '-','LineWidth', 1, 'Color','k')
+                %legend(varargin{2:end},'Location','northwest')
+                xlabel('AERONET Measurement')
+                ylabel('AOD Retrieval')
+                title(strcat('Band:',const.Band_Name(band)))
+                set(gca,'FontSize',18)
             end
-            aod_max_lim = 1.05*aod_max;
-            xlim([0,aod_max_lim]),ylim([0,aod_max_lim])
-            currentunits = get(gca,'Units');
-            set(gca, 'Units', 'Points');
-            axpos = get(gca,'Position');
-            set(gca, 'Units', currentunits);
-            markerWidth = 0.01/diff(xlim)*axpos(3); % Calculate Marker width in points
-            set(h, 'SizeData', markerWidth^2)
-            line('XData', [0 aod_max_lim], 'YData', [0 aod_max_lim], 'LineStyle', '-','LineWidth', 1, 'Color','k')
-            legend(varargin{2:end},'Location','northwest')
-            xlabel('AERONET Measurement','FontSize',18)
-            ylabel('AOD Retrieval','FontSize',18)
         end
         
         %legend({'Random Local Search','Coordinate Ascent','MCMC'},'Location','southeast')
-        set(gca,'FontSize',18)
-        export_fig(strcat('plots/',plot_name,'_',strjoin(varargin,'_')),'-png','-transparent','-r240')
+       
+        %export_fig(strcat('plots/',plot_name,'_',strjoin(varargin,'_')),'-png','-transparent','-r240')
 
     elseif strcmp(plot_name,'overlay')
         Date = varargin{1};
@@ -110,9 +119,10 @@ function plot_result(plot_name,const,varargin)
             
             if test_delta == 0
                 avga  = mean(aoda,2);
-                stda = std(aoda,0,2); 
-                errorbar(aodb,avga,-stda,stda,'MarkerEdgeColor',cols(p-2,:),'MarkerFaceColor',cols(p-2,:),'Color',cols(p-2,:),'LineStyle','none','Marker','x')
-                aod_max = max([aod_max;avga+stda;aodb]); 
+                %stda = std(aoda,0,2);
+                bd = quantile(aoda,[0.1,0.9],2);
+                errorbar(aodb,avga,bd(:,1)-avga,bd(:,2)-avga,'MarkerEdgeColor',cols(p-2,:),'MarkerFaceColor',cols(p-2,:),'Color',cols(p-2,:),'LineStyle','none','Marker','x')
+                aod_max = max([aod_max;bd(:,2);aodb]); 
             else
                 plot(repmat(aodb,1,6),aoda,'x')
                 legend({'\Delta=0.001','\Delta=0.01','\Delta=0.05','\Delta=0.1','\Delta=1','\Delta=10'},'Location','southeast')
@@ -183,7 +193,48 @@ function plot_result(plot_name,const,varargin)
             writeVideo(writerObj,M)
         end
         close(writerObj)
-          
+        
+    elseif strcmp(plot_name,'theta')
+        
+        Location = varargin{1};
+        Method = varargin{2};
+        cmap = varargin{3};
+        [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
+        
+        id = find(strcmp(TXT(2:end,7),Location));
+
+        Dates = TXT(id+1,2);
+        Paths = NUM(id+1,3);
+        Orbits = NUM(id+1,4);
+        Blocks = NUM(id+1,5);
+        
+        for i = [8,9,11,12,14]
+                
+            figure
+
+            for j = 1:const.Component_Num
+                
+                Date = Dates{i};
+                Path = Paths(i);
+                Orbit = Orbits(i);
+                Block = Blocks(i);
+
+                [reg,sample] = load_cache(Date,Path,Orbit,Block,const,'reg','sample',Method,0,0,1);
+
+                h = subplot(4,2,j);
+                p = get(h, 'pos');
+                p(1) = p(1) - 0.05;
+                p(3) = p(3) + 0.05;
+                set(h, 'pos', p);
+                [xid,yid] = find(reg.reg_is_used);
+                plot_1d(sample.theta(j,:), xid, yid, cmap, const,[0,1])
+                title(strcat('Component Num:',num2str(const.Component_Particle(j))))
+                set(gca,'FontSize',18)
+            end
+            
+            
+        end
+                 
     end
 
 end

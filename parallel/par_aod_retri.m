@@ -168,8 +168,13 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     [current.loglik,num] = log_lik(current,i,j,const.Channel_Used,Method);
     fprintf('\nRound: %d, Log-lik: %.4e, active: %d \n',t,current.loglik,num);
     
+    current.tau_4band = extract_aod_4band(current.tau,current.theta,reg.num_reg_used,ExtCroSect,const);
+    
     if ~strcmp(Method,'MCMC')
         sample = current;
+    else
+        sample.loglik = current.loglik;
+        sample.tau_4band = current.tau_4band;
     end
 
 end

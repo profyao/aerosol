@@ -34,8 +34,8 @@ function [aoda,aodb] = load_aod_batch(Location,const,Opt)
         else
             [~,~,I1,I2] = match_aeronet(x1,y1,x2,y2);
             fprintf('%s:%d,aeronet:%d,%d points are matched!\n',Opt,length(x1),length(x2),length(I1))
-            aoda = [aoda;aod1(I1)];
-            aodb = [aodb;aod2(I2)];
+            aoda = [aoda;aod1(I1,:)];
+            aodb = [aodb;aod2(I2,:)];
             
             %theta = [theta,theta1(:,I1)];
             %[tmp1,tmp2,tmp3,tmp4] = extract_cor(reg,sample,xid,yid,const);
