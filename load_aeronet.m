@@ -1,8 +1,8 @@
-function [aod, xid, yid, lon_a,lat_a] = load_aeronet(Date,Path,Block,Location,const) 
+function [aod, xid, yid, lon_a,lat_a] = load_aeronet(Date,Path,Block,r,Location,const) 
     
     [lon,lat] = get_coord(Path,Block,const);
-
-    file_aeronet = fullfile('aeronet/processed2',Location, [Date,'_aeronet.csv']);
+    RegSize = r/const.r1100;
+    file_aeronet = fullfile('aeronet/processed',Location, [Date,'_aeronet.csv']);
     
     try
         aeronet = csvread(file_aeronet,1,1);
@@ -19,13 +19,15 @@ function [aod, xid, yid, lon_a,lat_a] = load_aeronet(Date,Path,Block,Location,co
         yid = NaN*ones(m,1);
 
         for i=1:m
-
+            
             if mod(idx(i),const.XDim_r1100) == 0
-                xid(i) = ceil(const.XDim_r1100/const.RegScale);
+                xid(i) = ceil(const.XDim_r1100/RegSize);
             else
-                xid(i) = ceil(mod(idx(i),const.XDim_r1100)/const.RegScale);
+                xid(i) = ceil(mod(idx(i),const.XDim_r1100)/RegSize);
             end
-                yid(i) = ceil(ceil(idx(i)/const.XDim_r1100)/const.RegScale);    
+
+            yid(i) = ceil(ceil(idx(i)/const.XDim_r1100)/RegSize);
+                
         end
         
     catch

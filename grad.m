@@ -1,4 +1,4 @@
-function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit,varargin)
+function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit,varargin)
 
     switch var_str
         
@@ -24,8 +24,8 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
 
                     taul = max(taup - delta_tau,0);
                     taur = min(taup + delta_tau,3);
-                    [~,~,residl] = get_resid(taul,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
-                    [~,~,residr] = get_resid(taur,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+                    [~,~,residl] = get_resid(taul,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
+                    [~,~,residr] = get_resid(taur,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
 
                     if isinf(residl(1)) || isinf(residr(1))
                         g_v = 0;
@@ -90,8 +90,8 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
 
                         thetal = thetap - delta_theta_v; thetal(thetal<0)=0;
                         thetar = thetap + delta_theta_v;
-                        [~,~,residl] = get_resid(taup,thetal/sum(thetal),regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
-                        [~,~,residr] = get_resid(taup,thetar/sum(thetar),regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+                        [~,~,residl] = get_resid(taup,thetal/sum(thetal),regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
+                        [~,~,residr] = get_resid(taup,thetar/sum(thetar),regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
 
                         if isinf(residl(1)) || isinf(residr(1))
                             g_v(c) = 0;

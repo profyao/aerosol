@@ -1,4 +1,4 @@
-function preprocess_batch(Location,const,add_limit)
+function preprocess_batch(Location,const,r)
 
     [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
     
@@ -11,7 +11,8 @@ function preprocess_batch(Location,const,add_limit)
     
     %N = length(Dates);
     
-    for i = [8,9,11,12,14]
+    for i = [9,11,12,14]
+    %for i = 8:8
         
         Date = Dates{i};
         Path = Paths(i);
@@ -19,21 +20,21 @@ function preprocess_batch(Location,const,add_limit)
         Block = Blocks(i);
         
         %download product
-        %download_product(Date,Path,Orbit,const);
+        download_product(Date,Path,Orbit,const);
         
         %stage-1
-        %subreg = load_subreg(Date,Path,Orbit,Block,const);        
-        %subreg = load_cache(Date,Path,Orbit,Block,const,'subreg');
+        [rad_1100, ~, rad_275] = load_subreg(Date,Path,Orbit,Block,const);        
+        %[rad_1100, rad_275] = load_cache(Date,Path,Orbit,Block,const,'rad_1100','rad_275');
         
         %stage-2
-        %reg = subreg2reg2(subreg,Date,Path,Orbit,Block,const);
+        reg = subreg2reg(rad_1100,rad_275,Date,Path,Orbit,Block,r,const);
         
         %stage-3
-        smart = load_smart(Date,Path,Orbit,Block,const,add_limit);
+        smart = load_smart(Date,Path,Orbit,Block,const,0);
+        %smart = load_cache(Date,Path,Orbit,Block,r,'smart');
         
         %save preprocessed data
-        %save2cache(Date,Path,Orbit,Block,const,subreg,reg,smart);
-        save2cache(Date,Path,Orbit,Block,const,smart);
+        save2cache(Date,Path,Orbit,Block,r,reg,smart);
         
         %clean_product(Date);
 

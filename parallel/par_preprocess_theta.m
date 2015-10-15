@@ -1,4 +1,4 @@
-function [old_residp,old_thetap,taup,old_theta_neighbor,regp,smartp] = par_preprocess_theta(x,y,p,old_resid,old_theta,tau,i,j,reg,smart,kf,add_limit,const)
+function [old_residp,old_thetap,taup,old_theta_neighbor,regp,smartp] = par_preprocess_theta(x,y,p,old_resid,old_theta,tau,i,j,reg,smart,r,add_limit,const)
 
     xp = x(p);
     yp = y(p); 
@@ -14,6 +14,6 @@ function [old_residp,old_thetap,taup,old_theta_neighbor,regp,smartp] = par_prepr
         old_theta_neighbor = [];
     end
 
-    [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,kf,add_limit);
+    [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,r,add_limit);
 
 end

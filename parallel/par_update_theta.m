@@ -1,5 +1,5 @@
 function [new_theta, new_resid] = par_update_theta(old_theta,tau,old_resid,sigmasq,alpha,...
-    i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, core, add_limit,const)
+    i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit,const)
     
     if par == true
         
@@ -16,7 +16,7 @@ function [new_theta, new_resid] = par_update_theta(old_theta,tau,old_resid,sigma
             
             [new_theta(:,:,sub_block),new_resid(:,:,sub_block)] = ...
             par_update_theta_sub_block(sub_block_start,sub_block_end,num_pixel,x,y,old_resid,old_theta,sigmasq,alpha,Method,ExtCroSect,CompSSA,i,j,...
-            tau,reg,smart,kf,add_limit,const);
+            tau,reg,smart,r,add_limit,const);
 
         end
         
@@ -29,10 +29,10 @@ function [new_theta, new_resid] = par_update_theta(old_theta,tau,old_resid,sigma
     
         for p = 1:reg.num_reg_used
 
-            [old_residp,old_thetap,taup,old_theta_neighbor,regp,smartp] = par_preprocess_theta(x,y,p,old_resid,old_theta,tau,i,j,reg,smart,kf,add_limit,const);
+            [old_residp,old_thetap,taup,old_theta_neighbor,regp,smartp] = par_preprocess_theta(x,y,p,old_resid,old_theta,tau,i,j,reg,smart,r,add_limit,const);
 
             [old_theta(:,p),old_resid(:,p)] = par_update_theta_pixel(old_residp,taup,old_thetap,old_theta_neighbor,sigmasq,alpha,Method,...
-                regp,smartp,ExtCroSect,CompSSA,kf,add_limit,const);   
+                regp,smartp,ExtCroSect,CompSSA,r,add_limit,const);   
         end
         
         new_theta = old_theta;

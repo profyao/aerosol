@@ -1,5 +1,5 @@
 function [old_residp,old_taup,thetap,old_tau_neighbor,regp,smartp]...
-    = par_preprocess_tau(x,y,p,old_resid,theta,old_tau,i,j,reg,smart,kf,add_limit,const)
+    = par_preprocess_tau(x,y,p,old_resid,theta,old_tau,i,j,reg,smart,r,add_limit,const)
 
         xp = x(p);
         yp = y(p);
@@ -15,7 +15,7 @@ function [old_residp,old_taup,thetap,old_tau_neighbor,regp,smartp]...
             old_tau_neighbor = [];
         end
         
-        [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,kf,add_limit);
+        [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,r,add_limit);
  
 
 end

@@ -51,7 +51,8 @@ function smart = load_smart(Date,Path,Orbit,Block,const,add_limit)
     smart.scatter_angle = NaN*ones(const.XDim_r17600, const.YDim_r17600, const.Cam_Dim); % 8x32x9
     smart.mu0 = NaN*ones(const.XDim_r17600,const.YDim_r17600); %8x32
     
-    fprintf('load smart data!\n')
+    fprintf('load %s',file_smart_ss)
+    fprintf('load %s',file_smart_ms)
     
     for ii = 1:const.XDim_r17600
         for jj = 1:const.YDim_r17600

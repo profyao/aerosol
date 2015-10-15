@@ -1,55 +1,45 @@
-function plot_result(plot_name,const,varargin)
+function plot_result(plot_name,r,const,varargin)
     
-    %cols = const.cols;
-    cols = [0,0,1; 0,1,0; 1,0,0;1, 165/255, 0];
+    cols = [0,0,1; 0,1,0; 1,0,0; 1,165/255,0];
     
     if ~exist('plots','dir')
         mkdir('plots')
         fprintf('directory plots is created!\n')
     end
     
-    if strcmp(plot_name,'scatter')
+    if strcmp(plot_name,'scatter_4band')
         Location = varargin{1};
+        Method = varargin{2};
         
-        if nargin<4
-            error('not enough args for scatter plot!\n')
+        if nargin~=5
+            error('incorrect args for scatter_4band plot!\n')
         else
             figure
             for band = 1:const.Band_Dim
                 aod_max = 0;
                 subplot(2,2,band)
-                for p = 2:length(varargin)
-                    [aod_model,aod_aeronet] = load_aod_batch(Location,const,varargin{p});
-                    aod_model_band = aod_model(:,band);
-                    aod_aeronet_band = aod_aeronet(:,band);
-                    aod_max = max([aod_max;aod_model_band;aod_aeronet_band]);
-                    h = scatter(aod_aeronet_band,aod_model_band,'MarkerEdgeColor',cols(band,:),'MarkerFaceColor',cols(band,:));
-                    fprintf('correlation with aeronet is %f\n',corr(aod_model_band,aod_aeronet_band))
-                    fprintf('rms is %f\n',norm(aod_model_band-aod_aeronet_band)/sqrt(length(aod_model_band)))
-                    fprintf('avg bias is %f\n',mean(aod_model_band-aod_aeronet_band))
-                    hold on
-                end
+                [aod_model,aod_aeronet] = load_aod_batch(Location,r,const,Method);
+                aod_model_band = aod_model(:,band);
+                aod_aeronet_band = aod_aeronet(:,band);
+                aod_max = max([aod_max;aod_model_band;aod_aeronet_band]);
+                h = scatter(aod_aeronet_band,aod_model_band,'MarkerEdgeColor',cols(band,:),'MarkerFaceColor',cols(band,:));
+                fprintf('correlation with aeronet is %f\n',corr(aod_model_band,aod_aeronet_band))
+                fprintf('rms is %f\n',norm(aod_model_band-aod_aeronet_band)/sqrt(length(aod_model_band)))
+                fprintf('avg bias is %f\n',mean(aod_model_band-aod_aeronet_band))
                 aod_max_lim = 1.05*aod_max;
                 xlim([0,aod_max_lim]),ylim([0,aod_max_lim])
-                %currentunits = get(gca,'Units');
-                %set(gca, 'Units', 'Points');
-                %axpos = get(gca,'Position');
-                %set(gca, 'Units', currentunits);
-                %markerWidth = 0.01/diff(xlim)*axpos(3); % Calculate Marker width in points
-                %set(h, 'SizeData', markerWidth^2)
+                
                 set(h,'SizeData',25)
                 line('XData', [0 aod_max_lim], 'YData', [0 aod_max_lim], 'LineStyle', '-','LineWidth', 1, 'Color','k')
-                %legend(varargin{2:end},'Location','northwest')
+
                 xlabel('AERONET Measurement')
                 ylabel('AOD Retrieval')
                 title(strcat('Band:',const.Band_Name(band)))
                 set(gca,'FontSize',18)
             end
         end
-        
-        %legend({'Random Local Search','Coordinate Ascent','MCMC'},'Location','southeast')
-       
-        %export_fig(strcat('plots/',plot_name,'_',strjoin(varargin,'_')),'-png','-transparent','-r240')
+               
+        %export_fig(strcat('plots/',plot_name,'_R',r,'_',strjoin(varargin,'_')),'-png','-transparent','-r240')
 
     elseif strcmp(plot_name,'overlay')
         Date = varargin{1};
@@ -60,28 +50,24 @@ function plot_result(plot_name,const,varargin)
         Method = varargin{6};
         cmap = varargin{7};
         
-        [aod_model, ~,~, ~, lon1,lat1] = load_aod(Date,Path,Orbit,Block,const,Method);
-        [aod_aeronet, ~, ~, lon2,lat2] = load_aeronet(Date,Path,Block,Location,const);
+        [aod_model, ~,~, ~, lon1,lat1] = load_aod(Date,Path,Orbit,Block,r,const,Method);
+        [aod_aeronet, ~, ~, lon2,lat2] = load_aeronet(Date,Path,Block,r,Location,const);
+        
+        aod_model = aod_model(:,2);
+        aod_aeronet = aod_aeronet(:,2);
         
         aod = [aod_model;aod_aeronet];
         %aod_min = min(aod);aod_max = max(aod);
         aod_min = 0.02;aod_max=0.16;
         
-        cols = colormap(cmap);
-        colsize = size(cols,1);
-        map_model = round(1 + (aod_model - aod_min) / (aod_max-aod_min) .* (colsize-1));
-        map_aeronet = round(1 + (aod_aeronet - aod_min) / (aod_max-aod_min) .* (colsize-1));
-        
-        map_model(map_model>256)=256;map_model(map_model<1)=1;
-        map_aeronet(map_aeronet>256)=256;map_aeronet(map_aeronet<1)=1;
-        
-        h = scatter_patches(lon1,lat1,36,cols(map_model,:),'s','FaceAlpha',0.6,'EdgeColor','none');hold on
-        scatter_patches(lon2,lat2,50,cols(map_aeronet,:),'o','EdgeColor',[0 0 0]);
-        colorbar,caxis([aod_min aod_max])
-        uistack(h,'bottom');
+        scatter(lon1,lat1,16,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
+        scatter(lon2,lat2,50,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
+        colormap(cmap),colorbar
+        %uistack(h,'bottom');
         
         plot_google_map('MapType','hybrid','ShowLabels',0,'Alpha',0.8)
-        file_model = strcat('plots/',plot_name,'_',strjoin({Date,Location,Method},'_'));
+        set(gca,'FontSize',18)
+        file_model = strcat('plots/',plot_name,'_R',r,strjoin({Date,Location,Method},'_'));
         %export_fig(file_model,'-png','-transparent','-r240')
     
     elseif strcmp(plot_name,'resid')
@@ -103,7 +89,7 @@ function plot_result(plot_name,const,varargin)
         imagesc(R),colorbar;
         set(gcf,'Position',[100, 100, 800, 600]);
         set(gca,'FontSize',18)
-        export_fig(strcat('plots/',plot_name,'_',strjoin({Date,Method,num2str(iter)})),'-png','-transparent','-r240')
+        export_fig(strcat('plots/',plot_name,'_R',rstrjoin({Date,Method,num2str(iter)})),'-png','-transparent','-r240')
         
     elseif strcmp(plot_name,'stability')
        

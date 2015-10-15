@@ -1,5 +1,5 @@
 function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_tau_neighbor,thetap,kappa,sigmasq,delta,Method,...
-    regp,smartp,ExtCroSect,CompSSA, kf, add_limit, const)
+    regp,smartp,ExtCroSect,CompSSA, r, add_limit, const)
 
         n_neighbor = length(old_tau_neighbor);
         if n_neighbor > 0
@@ -31,7 +31,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_ta
 
             end
             
-            [~,~,residp] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);            
+            [~,~,residp] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);            
 
             new_chisq = nansum(residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));       
             chisq = nansum(old_residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));
@@ -78,12 +78,12 @@ function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_ta
             
         elseif strcmp(Method,'CD')
             
-            [g,flag] = grad(old_taup,old_tau_neighbor,thetap,'tau',sigmasq,old_residp,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit,kappa);
+            [g,flag] = grad(old_taup,old_tau_neighbor,thetap,'tau',sigmasq,old_residp,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit,kappa);
             
             if flag == -1
                 
                 new_taup = old_taup * 0.8;
-                [~,~,new_residp] = get_resid(new_taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+                [~,~,new_residp] = get_resid(new_taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
                            
             elseif flag == 0
                 
@@ -92,7 +92,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_ta
                 
             elseif flag == 1
                 
-                [new_residp,new_taup] = back_track(g,old_taup,old_tau_neighbor,thetap,'tau',sigmasq,old_residp,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit,kappa);                            
+                [new_residp,new_taup] = back_track(g,old_taup,old_tau_neighbor,thetap,'tau',sigmasq,old_residp,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit,kappa);                            
                 
             else          
                 error('flag is not assigned when calculating gradient!')

@@ -1,6 +1,8 @@
-function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,par,core,const,add_limit,delta)
+function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core,const,delta)
     
-    [reg,smart] = load_cache(Date,Path,Orbit,Block,const,'reg','smart');
+    par = true;
+    add_limit = false;
+    [reg,smart] = load_cache(Date,Path,Orbit,Block,r,'reg','smart');
     
     if sum(reg.reg_is_used(:))==0
         error_flag = 1;
@@ -31,16 +33,14 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
             
     [x,y] = find(reg.reg_is_used);
     
-    Q = igmrfprec([const.XDim_r, const.YDim_r], 1); % precision matrix for Gaussian Markov Random Field on a given grid
+    XDim_r = const.XDim_r4400 * const.r4400/r;
+    YDim_r = const.YDim_r4400 * const.r4400/r;
+    
+    Q = igmrfprec([XDim_r, YDim_r], 1); % precision matrix for Gaussian Markov Random Field on a given grid
     [i2d, j2d] = find(Q); % find nonzero element indices: 1-D from 1 to 4096 for i and j. size(i)=20160
     mask = (i2d ~= j2d) & reg.reg_is_used(i2d)==true & reg.reg_is_used(j2d)==true;
     i = reg.ind_used(i2d(mask));
     j = reg.ind_used(j2d(mask));
-    
-    % Dynamically determine component
-    if dy == true
-    %    [const.Component_Particle,const.Component_Num] = find_mostlik_component(reg,smart,x,y,ExtCroSect,CompSSA,kf,const,false);
-    end
     
     if strcmp(Method,'CD')
         iter = 5;
@@ -53,8 +53,6 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
 	%current.tau = diag(tau0_r(x,y));
     current.tau = nanmean(tau0(:))*ones(reg.num_reg_used,1);
     
-    %delta = 0.05;
-
     if strcmp(Method,'MCMC')
         current.alpha = ones(const.Component_Num,1);                 
         for jj = 1:reg.num_reg_used
@@ -66,7 +64,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
         current.theta = 1/const.Component_Num * ones(const.Component_Num,reg.num_reg_used);
     end
     
-    [current.atm_path,current.surf,current.resid] = par_update_resid(current.tau,current.theta, x, y, smart, reg, ExtCroSect, CompSSA, kf, par,core,add_limit, const);    
+    [current.atm_path,current.surf,current.resid] = par_update_resid(current.tau,current.theta, x, y, smart, reg, ExtCroSect, CompSSA, par, core, const, r, add_limit);    
     current.sigmasq = update_sigmasq(current.resid,Method);
        
     % Initialize kappa
@@ -77,7 +75,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
     end
     
     if strcmp(Method,'MCMC')
-           
+
         sample.tau = zeros(reg.num_reg_used, iter+1);
         sample.tau(:,1) = current.tau;
         sample.alpha = zeros(const.Component_Num, iter+1);
@@ -101,34 +99,16 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
         
     end
     
-    %sample.loglik = zeros(iter+1,1);
-    %[sample.loglik(1),num] = log_lik(current,i,j,const.Channel_Used,Method);
-    
-    %fprintf('Round: %d, Log-lik: %.4e, active: %d \n',0,sample.loglik(1),num);
-    
-    %if strcmp(Method,'MISR')
-        
-    %    CompModNum = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
-    %'Component model number', 'FirstRecord', 1,'NumRecords', const.Model.MixtureDim);
-    %    MixSSA = hdfread(file_aerosol, '/Mixture Information/Mixture Data', 'Fields', ...
-    %'Mixture spectral single scattering albedo', 'FirstRecord', 1 ,'NumRecords', const.Model.MixtureDim);
-    %    CompFrac = hdfread(file_aerosol, '/Mixture Information/Component Fractional Spectral Optical Depth', ...
-    %'Index', {[1  1  1],[1  1  1],[const.Band.Dim   const.Model.NumComponent  const.Model.MixtureDim]});
-        
-    %    sample = par_aod_retr_search(x,y,reg,smart,CompModNum,MixSSA,CompFrac,ExtCroSect,const,add_limit);
-        
-    %else
-    
     [current.loglik,num] = log_lik(current,i,j,const.Channel_Used,Method);
     fprintf('Round: 0, Log-lik: %.4e, active: %d \n',current.loglik,num);
 
     for t = 1: iter
-        %clf
-        %show(sample,reg,2,1,t,jet(256),const)   
-        %M=getframe;
+        clf
+        show(r,current,reg,2,1,jet(256),const)   
+        M=getframe;
 
         [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
-            delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, core, add_limit, const);
+            delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit, const);
 
         if strcmp(Method,'CD-random-noprior')
             current.kappa = 0;
@@ -137,7 +117,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
         end
 
         [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
-            i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, kf, par, core, add_limit, const);
+            i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit, const);
 
         if strcmp(Method,'MCMC')
             current.alpha = sample_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used);
@@ -146,7 +126,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
 
         current.sigmasq = update_sigmasq(current.resid,Method);
 
-        [current.atm_path,current.surf,~] = par_update_resid(current.tau,current.theta, x, y, smart, reg, ExtCroSect, CompSSA, kf, par,core,add_limit, const);
+        [current.atm_path,current.surf,~] = par_update_resid(current.tau,current.theta, x, y, smart, reg, ExtCroSect, CompSSA, par,core,const,r, add_limit);
         
         if strcmp(Method,'MCMC')
             sample.tau(:,t+1) = current.tau;
@@ -163,18 +143,14 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,Method,kf,dy,
         fprintf('.');
 
     end    
-    %end
     
     [current.loglik,num] = log_lik(current,i,j,const.Channel_Used,Method);
     fprintf('\nRound: %d, Log-lik: %.4e, active: %d \n',t,current.loglik,num);
-    
-    current.tau_4band = extract_aod_4band(current.tau,current.theta,reg.num_reg_used,ExtCroSect,const);
-    
+        
     if ~strcmp(Method,'MCMC')
         sample = current;
     else
         sample.loglik = current.loglik;
-        sample.tau_4band = current.tau_4band;
     end
 
 end

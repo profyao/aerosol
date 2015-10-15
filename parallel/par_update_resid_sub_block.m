@@ -1,4 +1,4 @@
-function [atm_path,surf,resid] = par_update_resid_sub_block(sub_block_start,sub_block_end,num_pixel,x,y,reg,smart,tau,theta,ExtCroSect,CompSSA,const,kf,add_limit);
+function [atm_path,surf,resid] = par_update_resid_sub_block(sub_block_start,sub_block_end,num_pixel,x,y,reg,smart,tau,theta,ExtCroSect,CompSSA,const,r,add_limit)
     
     sub_block_size = sub_block_end-sub_block_start+1;
     atm_path = NaN * ones(const.NChannel,sub_block_size);
@@ -13,8 +13,8 @@ function [atm_path,surf,resid] = par_update_resid_sub_block(sub_block_start,sub_
         thetap = theta(:,p); 
         taup = tau(p);
         
-        [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,kf,add_limit);
-        [atm_path(:,cnt),surf(:,cnt),resid(:,cnt)] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+        [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,r,add_limit);
+        [atm_path(:,cnt),surf(:,cnt),resid(:,cnt)] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
         
         cnt = cnt + 1;
 

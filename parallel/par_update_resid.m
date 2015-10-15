@@ -1,4 +1,4 @@
-function [atm_path,surf,resid] = par_update_resid(tau,theta, x, y, smart, reg, ExtCroSect, CompSSA, kf, par,core,add_limit, const)
+function [atm_path,surf,resid] = par_update_resid(tau,theta, x, y, smart, reg, ExtCroSect, CompSSA, par, core, const, r, add_limit)
    
     if par == true
         
@@ -15,7 +15,7 @@ function [atm_path,surf,resid] = par_update_resid(tau,theta, x, y, smart, reg, E
             sub_block_end = sub_block*size_sub_block;
             
             [atm_path(:,:,sub_block),surf(:,:,sub_block),resid(:,:,sub_block)] = ...
-            par_update_resid_sub_block(sub_block_start,sub_block_end,num_pixel,x,y,reg,smart,tau,theta,ExtCroSect,CompSSA,const,kf,add_limit);
+            par_update_resid_sub_block(sub_block_start,sub_block_end,num_pixel,x,y,reg,smart,tau,theta,ExtCroSect,CompSSA,const,r,add_limit);
 
         end
         
@@ -39,9 +39,9 @@ function [atm_path,surf,resid] = par_update_resid(tau,theta, x, y, smart, reg, E
             thetap = theta(:,p); 
             taup = tau(p);
 
-            [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,kf,add_limit);
+            [regp,smartp] = extract_pixel(xp,yp,reg,smart,const,r,add_limit);
 
-            [atm_path(:,p),surf(:,p),resid(:,p)] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,kf,add_limit);
+            [atm_path(:,p),surf(:,p),resid(:,p)] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
         end
     end
 

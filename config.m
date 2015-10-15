@@ -28,26 +28,36 @@ const.Cam_Dim = length(const.Cam_Name);
 
 % MISR spatial resolutions
 const.r275 = 275;
+const.r550 = 550;
 const.r1100 = 1100;
+const.r2200 = 2200;
 const.r4400 = 4400;
 const.r8800 = 8800;
 const.r17600 = 17600;
+
+const.XDim_r275 = 512;
+const.YDim_r275 = 2048;
+const.XDim_r550 = 256;
+const.YDim_r550 = 1024;
 const.XDim_r1100 = 128;
 const.YDim_r1100 = 512;
+const.XDim_r2200 = 64;
+const.YDim_r2200 = 256;
 const.XDim_r4400 = 32;
 const.YDim_r4400 = 128;
 const.XDim_r8800 = 16;
 const.YDim_r8800 = 64;
 const.XDim_r17600 = 8;
 const.YDim_r17600 = 32;
+
 const.r = const.r4400; % default resolution for retrieval
 const.XDim_r = const.XDim_r4400; % default X dimension
 const.YDim_r = const.YDim_r4400; % default Y dimension
 
 % Number of subregions in a region
-const.RegSize = const.r / const.r1100;
+ const.RegSize = const.r / const.r1100;
 % Scale factor to the 17.6-km standard region
-const.RegScale = const.r17600 / const.r;
+ const.RegScale = const.r17600 / const.r;
 
 % XDim is the number of rows in a block, depending on the resolution
 % YDim is the number of columns in a block,  depending on the resolution
@@ -63,17 +73,17 @@ const.Band_Name = {'BlueBand','GreenBand','RedBand','NIRBand'};
 const.Band_Used = [1,1,1,1];
 const.Channel_Used = logical(kron(const.Band_Used',ones(const.Cam_Dim,1)));
 
-
 const.Band_Radiance = {'Blue Radiance/RDQI','Green Radiance/RDQI','Red Radiance/RDQI','NIR Radiance/RDQI'};
 const.Config_rdqi1 = 1;
 const.Config_c_lambda = [5.67e-6, 1.04e-4, 4.89e-5,3.94e-6];
 const.Config_spectral_corr_matrix = [1.0106,-0.0057,-0.0038,-0.0011;
-    -0.0080,1.0200,-0.0086,-0.0034;
-    -0.0060,-0.0048,1.0145,-0.0036;
-    -0.0048,-0.0033,-0.0136,1.0217];
+                                    -0.0080,1.0200,-0.0086,-0.0034;
+                                    -0.0060,-0.0048,1.0145,-0.0036;
+                                    -0.0048,-0.0033,-0.0136,1.0217];
 
 const.sample_size = const.RegSize*const.RegSize;
 const.Config_min_het_subr_thresh = const.sample_size/4;
+
 const.min_cam_used=2;
 const.Config_first_eigenvalue_for_eofs = 1;
 const.Config_eigenvector_variance_thresh = 0.95;
@@ -81,7 +91,6 @@ const.Config_eigenvector_variance_thresh = 0.95;
 % MISR aerosol model parameters
 const.Model_ComponentDim = 21;
 const.Model_MixtureDim = 74;
-const.Model_NumComponent = 3;
 const.Model_Pressure = [607.95,1013.25];
 
 const.Model_mu0Grid = 0.2:0.01:1.0;
@@ -101,13 +110,13 @@ const.Component_Num = length(const.Component_Particle);
 
 const.Config_albedo_thresh_land = 0.015;
 
-const.cols = [0    0.4470    0.7410
-    0.8500    0.3250    0.0980
-    0.4660    0.6740    0.1880
-    0.3010    0.7450    0.9330
-    0.9290    0.6940    0.1250
-    0.4940    0.1840    0.5560
-    0.6350    0.0780    0.1840];
+const.cols =    [0        0.4470    0.7410
+                0.8500    0.3250    0.0980
+                0.4660    0.6740    0.1880
+                0.3010    0.7450    0.9330
+                0.9290    0.6940    0.1250
+                0.4940    0.1840    0.5560
+                0.6350    0.0780    0.1840];
 
 const.str_kf = {'','_k-factor'};
 const.str_dy = {'','_dynamic_component'};
