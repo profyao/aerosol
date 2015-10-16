@@ -13,6 +13,7 @@ function par_aod_retri_batch(Method,Location,r,core,const)
     
     for i = [8,9,11,12,14]
     %for i = 8:8
+
         Date = Dates{i};
         Path = Paths(i);
         Orbit = Orbits(i);
