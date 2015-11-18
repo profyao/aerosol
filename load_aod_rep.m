@@ -1,4 +1,4 @@
-function [aoda,aodb] = load_aod_rep(Location,const,Method,test_delta)
+function [aoda,aodb] = load_aod_rep(Location,r,const,Method,test_delta)
     
     [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
     
@@ -11,7 +11,7 @@ function [aoda,aodb] = load_aod_rep(Location,const,Method,test_delta)
     
     if strcmp(Method,'MCMC')
         rep_num = 1;
-    elseif test_delta==0
+    elseif test_delta==false
         rep_num = 100;
     else
         rep_num = 6;
@@ -34,8 +34,8 @@ function [aoda,aodb] = load_aod_rep(Location,const,Method,test_delta)
         Path = Paths(i);
         Block = Blocks(i);
         Orbit = Orbits(i);
-        [~, ~, x1, y1, ~, ~] = load_aod(Date,Path,Orbit,Block,const,Method);
-        [aod2, x2, y2, ~, ~] = load_aeronet(Date,Path,Block,Location,const);
+        [~, ~, x1, y1, ~, ~] = load_aod(Date,Path,Orbit,Block,r,const,'CD-random');
+        [aod2, x2, y2, ~, ~] = load_aeronet(Date,Path,Block,r,Location,const);
         [~,~,I1,I2] = match_aeronet(x1,y1,x2,y2);
         fprintf('%s:%d,aeronet:%d,%d points are matched!\n',Method,length(x1),length(x2),length(I1))
         
@@ -44,8 +44,8 @@ function [aoda,aodb] = load_aod_rep(Location,const,Method,test_delta)
             aod1 = tmp(I1,500:5:end);
         else
             aod1 = [];
-            for r = 1:rep_num
-                tmp = boot{cnt,r};
+            for rep = 1:rep_num
+                tmp = boot{cnt,rep};
                 aod1 = [aod1,tmp(I1)];
             end
         end

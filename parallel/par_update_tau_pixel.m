@@ -19,8 +19,8 @@ function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_ta
                     taup = mu + delta * randn(1);
                     taup(taup<0)=0;
                     taup(taup>3)=3;
-                    smooth0 = kappa * sum(old_taup - old_tau_neighbor).^2;
-                    smooth1 = kappa * sum(taup-old_tau_neighbor).^2;
+                    smooth0 = kappa * sum((old_taup - old_tau_neighbor).^2);
+                    smooth1 = kappa * sum((taup-old_tau_neighbor).^2);
                 else
                     mu = old_taup;
                     taup = mu + delta * randn(1);

@@ -23,6 +23,7 @@ function plot_result(plot_name,r,const,varargin)
                 aod_aeronet_band = aod_aeronet(:,band);
                 aod_max = max([aod_max;aod_model_band;aod_aeronet_band]);
                 h = scatter(aod_aeronet_band,aod_model_band,'MarkerEdgeColor',cols(band,:),'MarkerFaceColor',cols(band,:));
+                fprintf('load band: %s\n', const.Band_Name{band})
                 fprintf('correlation with aeronet is %f\n',corr(aod_model_band,aod_aeronet_band))
                 fprintf('rms is %f\n',norm(aod_model_band-aod_aeronet_band)/sqrt(length(aod_model_band)))
                 fprintf('avg bias is %f\n',mean(aod_model_band-aod_aeronet_band))
@@ -34,12 +35,48 @@ function plot_result(plot_name,r,const,varargin)
 
                 xlabel('AERONET Measurement')
                 ylabel('AOD Retrieval')
-                title(strcat('Band:',const.Band_Name(band)))
+                title(strcat('Band:',const.Band_Name{band}))
                 set(gca,'FontSize',18)
             end
         end
                
         %export_fig(strcat('plots/',plot_name,'_R',r,'_',strjoin(varargin,'_')),'-png','-transparent','-r240')
+        
+    elseif strcmp(plot_name,'scatter')
+        
+        Location = varargin{1};
+        aod_max = 0;
+        
+        figure
+        for p = 2:nargin - 3
+            
+            Method = varargin{p};          
+            [aod_model,aod_aeronet] = load_aod_batch(Location,r,const,Method);
+            
+            if ~strcmp(Method,'MISR')
+                aod_model_band = aod_model(:,const.Band_Green);
+            else
+                aod_model_band = aod_model;
+            end
+            
+            aod_aeronet_band = aod_aeronet(:,const.Band_Green);
+            aod_max = max([aod_max;aod_model_band;aod_aeronet_band]);
+            h = scatter(aod_aeronet_band,aod_model_band,'MarkerEdgeColor',const.cols(p-1,:),'MarkerFaceColor',const.cols(p-1,:));
+            hold on
+            fprintf('load band: %s\n', const.Band_Name{const.Band_Green})
+            fprintf('correlation with aeronet is %f\n',corr(aod_model_band,aod_aeronet_band))
+            fprintf('rms is %f\n',norm(aod_model_band-aod_aeronet_band)/sqrt(length(aod_model_band)))
+            fprintf('avg bias is %f\n',mean(aod_model_band-aod_aeronet_band))
+        end
+        
+        set(h,'SizeData',25)
+        aod_max_lim = 1.05*aod_max;
+        xlim([0,aod_max_lim]),ylim([0,aod_max_lim])
+        line('XData', [0 aod_max_lim], 'YData', [0 aod_max_lim], 'LineStyle', '-','LineWidth', 1, 'Color','k')
+        xlabel('AERONET Measurement')
+        ylabel('AOD Retrieval')
+        set(gca,'FontSize',18)
+        legend(varargin{2:end},'Location','northwest')
 
     elseif strcmp(plot_name,'overlay')
         Date = varargin{1};
@@ -59,9 +96,9 @@ function plot_result(plot_name,r,const,varargin)
         aod = [aod_model;aod_aeronet];
         %aod_min = min(aod);aod_max = max(aod);
         aod_min = 0.02;aod_max=0.16;
-        
-        scatter(lon1,lat1,16,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
-        scatter(lon2,lat2,50,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
+        figure
+        scatter(lon1,lat1,50,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
+        scatter(lon2,lat2,100,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
         colormap(cmap),colorbar
         %uistack(h,'bottom');
         
@@ -79,8 +116,7 @@ function plot_result(plot_name,r,const,varargin)
         Method = varargin{5};
         iter = varargin{6};
         
-        sample = load_cache(Date,Path,Orbit,Block,const,'sample',Method,0,0,1);
-        
+        sample = load_cache(Date,Path,Orbit,Block,r,'sample',Method);
         resid = squeeze(sample.resid(:,:,iter))';
         resid(isinf(resid)) = NaN;
        
@@ -89,7 +125,7 @@ function plot_result(plot_name,r,const,varargin)
         imagesc(R),colorbar;
         set(gcf,'Position',[100, 100, 800, 600]);
         set(gca,'FontSize',18)
-        export_fig(strcat('plots/',plot_name,'_R',rstrjoin({Date,Method,num2str(iter)})),'-png','-transparent','-r240')
+        %export_fig(strcat('plots/',plot_name,'_R',rstrjoin({Date,Method,num2str(iter)})),'-png','-transparent','-r240')
         
     elseif strcmp(plot_name,'stability')
        
@@ -98,16 +134,17 @@ function plot_result(plot_name,r,const,varargin)
         
         figure
         aod_max = 0;
+        
         for p = 3:length(varargin)
             Method = varargin{p};
 
-            [aoda,aodb] = load_aod_rep(Location,const,Method,test_delta);
+            [aoda,aodb] = load_aod_rep(Location,r,const,Method,test_delta);
             
             if test_delta == 0
                 avga  = mean(aoda,2);
                 %stda = std(aoda,0,2);
                 bd = quantile(aoda,[0.1,0.9],2);
-                errorbar(aodb,avga,bd(:,1)-avga,bd(:,2)-avga,'MarkerEdgeColor',cols(p-2,:),'MarkerFaceColor',cols(p-2,:),'Color',cols(p-2,:),'LineStyle','none','Marker','x')
+                errorbar(aodb,avga,bd(:,1)-avga,bd(:,2)-avga,'MarkerEdgeColor',const.cols(p-2,:),'MarkerFaceColor',const.cols(p-2,:),'Color',const.cols(p-2,:),'LineStyle','none','Marker','x')
                 aod_max = max([aod_max;bd(:,2);aodb]); 
             else
                 plot(repmat(aodb,1,6),aoda,'x')
@@ -115,20 +152,19 @@ function plot_result(plot_name,r,const,varargin)
                 aod_max = max([aod_max;aoda(:);aodb]);
                 delta_all = [0.001,0.01,0.05,0.1,1,10];
                 
-                for r = 1:6
-                    fprintf('delta is %f\n',delta_all(r))
-                    fprintf('correlation with aeronet is %f\n',corr(aodb,aoda(:,r)))
-                    fprintf('rms is %f\n',norm(aodb-aoda(:,r))/sqrt(length(aodb)))
-                    fprintf('avg bias is %f\n',mean(aodb-aoda(:,r)))
+                for rep = 1:6
+                    fprintf('delta is %f\n',delta_all(rep))
+                    fprintf('correlation with aeronet is %f\n',corr(aodb,aoda(:,rep)))
+                    fprintf('rms is %f\n',norm(aodb-aoda(:,rep))/sqrt(length(aodb)))
+                    fprintf('avg bias is %f\n',mean(aodb-aoda(:,rep)))
                 end
-                
                 
             end
             
             hold on
         end
         aod_max_lim = 1.05*aod_max;
-        xlim([0,aod_max_lim]),ylim([0,1.05*aod_max_lim])
+        xlim([0,aod_max_lim]),ylim([0,aod_max_lim])
         line('XData', [0 aod_max_lim], 'YData', [0 aod_max_lim], 'LineStyle', '-','LineWidth', 1, 'Color','k')
         if test_delta == 0
             legend({'Random Local Search','MCMC'},'Location','northwest')
@@ -141,7 +177,7 @@ function plot_result(plot_name,r,const,varargin)
         else
             file_model = strcat('plots/',plot_name,'_delta');
         end
-        export_fig(file_model,'-png','-transparent','-r240')
+        %export_fig(file_model,'-png','-transparent','-r240')
         
         
     elseif strcmp(plot_name,'post_dist')
@@ -194,8 +230,8 @@ function plot_result(plot_name,r,const,varargin)
         Orbits = NUM(id+1,4);
         Blocks = NUM(id+1,5);
         
-        for i = [8,9,11,12,14]
-                
+        for i = 1:length(Dates)
+            
             figure
 
             for j = 1:const.Component_Num
@@ -205,7 +241,7 @@ function plot_result(plot_name,r,const,varargin)
                 Orbit = Orbits(i);
                 Block = Blocks(i);
 
-                [reg,sample] = load_cache(Date,Path,Orbit,Block,const,'reg','sample',Method,0,0,1);
+                [reg,sample] = load_cache(Date,Path,Orbit,Block,r,'reg','sample',Method);
 
                 h = subplot(4,2,j);
                 p = get(h, 'pos');
@@ -213,14 +249,13 @@ function plot_result(plot_name,r,const,varargin)
                 p(3) = p(3) + 0.05;
                 set(h, 'pos', p);
                 [xid,yid] = find(reg.reg_is_used);
-                plot_1d(sample.theta(j,:), xid, yid, cmap, const,[0,1])
+                plot_1d(r, sample.theta(j,:), xid, yid, cmap, const,[0,1])
                 title(strcat('Component Num:',num2str(const.Component_Particle(j))))
                 set(gca,'FontSize',18)
-            end
+            end 
             
-            
-        end
-                 
+        end 
+        
     end
 
 end

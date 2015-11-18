@@ -1,6 +1,6 @@
 get_raw = function(filenames,date_str){
   repo = data.frame()
-  cid = c('Date.dd.mm.yy.','Time.hh.mm.ss.','AOT_440','AOT_675','AOT_870','X440.675Angstrom','X500.870Angstrom')
+  cid = c('Date.dd.mm.yy.','Time.hh.mm.ss.','AOT_440','AOT_675','AOT_870','X440.675Angstrom','X500.870Angstrom','X440.870Angstrom')
   for (filename in filenames){
     site = readLines(filename,4)
     raw = read.table(file = filename, header = T, sep=',', skip = 4,colClasses = "character")
@@ -12,19 +12,32 @@ get_raw = function(filenames,date_str){
     
     if ( num_valid > 0){
       new_data = raw[rid,cid]
-      colnames(new_data) = c('Date','Time','AOT_440','AOT_675','AOT_870','AE_440_675','AE_500_870')
+      colnames(new_data) = c('Date','Time','AOT_440','AOT_675','AOT_870','AE_440_675','AE_500_870','AE_440_870')
       
       new_data$Date = gsub(':','/',new_data$Date)
       new_data$AE_440_675 = as.numeric(new_data$AE_440_675)
-      new_data$AE_500_870 = as.numeric(new_data$AE_500_870)
       new_data$AOT_440 = as.numeric(new_data$AOT_440)
       new_data$AOT_675 = as.numeric(new_data$AOT_675)
-      new_data$AOT_870 = as.numeric(new_data$AOT_870)
       
       new_data$AOT_446 = new_data$AOT_440 * exp( - log(446/440) * new_data$AE_440_675 )
       new_data$AOT_558 = 0.5 * ( new_data$AOT_440 * exp( - log(558/440) * new_data$AE_440_675 ) + new_data$AOT_675 * exp( - log(558/675) * new_data$AE_440_675 ) )
       new_data$AOT_672 = new_data$AOT_675 * exp( - log(672/675) * new_data$AE_440_675 )
-      new_data$AOT_867 = new_data$AOT_870 * exp( - log(867/870) * new_data$AE_500_870 )
+
+      if (new_data$AOT_870[1] == 'N/A'){
+        new_data$AE_440_870 = as.numeric(new_data$AE_440_870)
+        new_data$AOT_867 = new_data$AOT_675 * exp( - log(867/675) * new_data$AE_440_870 )
+        new_data$AE_440_870 = NULL
+        new_data$AE_500_870 = NULL
+        new_data$AOT_870 = NULL
+      }else{
+        new_data$AE_500_870 = as.numeric(new_data$AE_500_870)
+        new_data$AOT_870 = as.numeric(new_data$AOT_870)
+        new_data$AOT_867 = new_data$AOT_870 * exp( - log(867/870) * new_data$AE_500_870 )
+        new_data$AE_440_870 = NULL
+        new_data$AE_500_870 = NULL
+        new_data$AOT_870 = NULL
+      }
+      
       
       tmp = data.frame(Site_Name=rep(site_name,num_valid),lon=rep(as.numeric(lon),num_valid),lat=rep(as.numeric(lat),num_valid))
       

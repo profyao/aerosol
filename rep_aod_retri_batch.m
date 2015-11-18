@@ -1,4 +1,4 @@
-function rep_aod_retri_batch(Method,Location,core,test_delta,const)
+function rep_aod_retri_batch(Method,r,Location,core,test_delta,const)
     
     [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
     
@@ -12,7 +12,7 @@ function rep_aod_retri_batch(Method,Location,core,test_delta,const)
     if strcmp(Method,'MCMC')
         rep_num = 1;
     elseif test_delta==0
-        rep_num = 100;
+        rep_num = 1000;
     else
         delta_all = [0.001,0.01,0.05,0.1,1,10];
         rep_num = 6;
@@ -20,13 +20,13 @@ function rep_aod_retri_batch(Method,Location,core,test_delta,const)
 
     boot = cell(5,rep_num);
     
-    for r = 1:rep_num
+    for rep = 1:rep_num
         
         cnt = 1;
-        if test_delta == 0
+        if test_delta == false
             delta = 0.05;
         else
-            delta = delta_all(r);
+            delta = delta_all(rep);
             fprintf('delta is %f \n',delta)
         end
 
@@ -37,9 +37,9 @@ function rep_aod_retri_batch(Method,Location,core,test_delta,const)
             Orbit = Orbits(i);
             Block = Blocks(i);
 
-            disp([cnt,r])
-            [sample,~] = par_aod_retri(Date,Path,Orbit,Block,Method,0,0,1,core,const,0,delta);
-            boot{cnt,r} = sample.tau;
+            disp([cnt,rep])
+            [sample,~] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core,const,delta);
+            boot{cnt,rep} = sample.tau;
             clc
             
             cnt = cnt + 1;

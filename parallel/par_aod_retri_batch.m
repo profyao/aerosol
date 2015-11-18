@@ -9,11 +9,9 @@ function par_aod_retri_batch(Method,Location,r,core,const)
     Orbits = NUM(id+1,4);
     Blocks = NUM(id+1,5);
     
-    %N = length(Dates);
-    
-    for i = [8,9,11,12,14]
-    %for i = 8:8
-
+    %for i = 1:length(Dates)
+    for i = 1:1
+         
         Date = Dates{i};
         Path = Paths(i);
         Orbit = Orbits(i);

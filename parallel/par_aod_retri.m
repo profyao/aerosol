@@ -30,11 +30,15 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
     CompSSA = hdfread(file_aerosol, '/Component Particle Information/Data Table', 'Fields', ...
         'Spectral single scattering albedo', 'FirstRecord',1 ,'NumRecords', const.Model_ComponentDim);
     CompSSA = CompSSA{1};
-            
+
     [x,y] = find(reg.reg_is_used);
     
     XDim_r = const.XDim_r4400 * const.r4400/r;
     YDim_r = const.YDim_r4400 * const.r4400/r;
+    
+    %figure,plot_2d(reg.mean_equ_ref(:,:,2,1),hot,[0,0.2])
+    %reg.mean_equ_ref = add_noise(reg.mean_equ_ref,0.1);
+    %figure,plot_2d(reg.mean_equ_ref(:,:,2,1),hot,[0,0.2])
     
     Q = igmrfprec([XDim_r, YDim_r], 1); % precision matrix for Gaussian Markov Random Field on a given grid
     [i2d, j2d] = find(Q); % find nonzero element indices: 1-D from 1 to 4096 for i and j. size(i)=20160
@@ -47,7 +51,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
     elseif strcmp(Method,'MCMC')
         iter = 20;
     else
-        iter = 20;
+        iter = 1;
     end
     %tau0_r = kron(tau0, ones(RegScale));
 	%current.tau = diag(tau0_r(x,y));
@@ -73,6 +77,9 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
     else
         current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
     end
+    
+    kappa = zeros(iter+1,1);
+    kappa(1) = current.kappa;
     
     if strcmp(Method,'MCMC')
 
@@ -101,11 +108,12 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
     
     [current.loglik,num] = log_lik(current,i,j,const.Channel_Used,Method);
     fprintf('Round: 0, Log-lik: %.4e, active: %d \n',current.loglik,num);
-
+    
+    tic
     for t = 1: iter
-        clf
-        show(r,current,reg,2,1,jet(256),const)   
-        M=getframe;
+        %clf
+        %show(r,current,reg,2,1,jet(256),const)   
+        %M=getframe;
 
         [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
             delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit, const);
@@ -138,17 +146,25 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
             sample.surf(:,:,t+1) = current.surf;
         end
         
+        kappa(t+1) = current.kappa;
         %[sample.loglik(t+1),num] = log_lik(current,i,j,const.Channel_Used,Method);
         %fprintf('Round: %d, Log-lik: %.4e, active: %d \n',t,sample.loglik(t+1),num);
         fprintf('.');
+        
+        if mod(t,50)==0
+            fprintf('\n')
+        end
 
-    end    
+    end
+    
+    toc
     
     [current.loglik,num] = log_lik(current,i,j,const.Channel_Used,Method);
     fprintf('\nRound: %d, Log-lik: %.4e, active: %d \n',t,current.loglik,num);
         
     if ~strcmp(Method,'MCMC')
         sample = current;
+        sample.kappa = kappa;
     else
         sample.loglik = current.loglik;
     end

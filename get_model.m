@@ -20,7 +20,11 @@ function [atm_path,surf_lim] = get_model(tau,theta,ExtCroSect,CompSSA,smartp,con
         if tau_band==0
             ss = reshape(ss_band(1,:,:),const.Cam_Dim,const.Component_Num);
             ms = rayleigh;
-        else 
+        elseif tau_band >=6
+            ss = reshape(ss_band(end,:,:),const.Cam_Dim,const.Component_Num); 
+            ms = reshape(ms_band(end,:,:),const.Cam_Dim,const.Component_Num); 
+
+        else
             ss = interpol_3d_mex(tau_band, ss_band); %9x8
             ms = interpol_3d_mex(tau_band, ms_band);               
         end

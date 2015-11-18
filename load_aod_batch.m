@@ -13,8 +13,8 @@ function [aoda,aodb] = load_aod_batch(Location,r,const,Opt)
     aoda = [];
     aodb = [];
 
-    
-    for i = [8,9,11,12,14]
+    for i = 1:length(Dates)
+        
         Date = Dates{i};
         Path = Paths(i);
         Orbit = Orbits(i);

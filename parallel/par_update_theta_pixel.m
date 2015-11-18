@@ -10,8 +10,9 @@ function [new_thetap,new_residp] = par_update_theta_pixel(old_residp,taup,old_th
             else
                 mu = old_thetap;
             end
-
+            
             thetap = gamrnd(mu,1);
+            %thetap = gamrnd(0.05*ones(const.Component_Num,1),1);
             thetap = thetap / sum(thetap);
                 
             [~,~,residp] = get_resid(taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);

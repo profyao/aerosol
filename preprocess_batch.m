@@ -8,11 +8,8 @@ function preprocess_batch(Location,const,r)
     Paths = NUM(id+1,3);
     Orbits = NUM(id+1,4);
     Blocks = NUM(id+1,5);
-    
-    %N = length(Dates);
-    
-    for i = [9,11,12,14]
-    %for i = 8:8
+        
+    for i = 1:length(Dates)
         
         Date = Dates{i};
         Path = Paths(i);

@@ -1,7 +1,8 @@
-function theta0 = polar_plot(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,scatter_type,const)
+function theta0 = polar_plot(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,scatter_type,cx,const)
     
     [theta0,theta,~,phi,rho] = extract_BRF(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,scatter_type,const);
     aod_grid = const.Model_OpticalDepthGrid;
+    
     
     % Convert to Cartesian
     %x = theta.*cosd(phi);
@@ -11,7 +12,7 @@ function theta0 = polar_plot(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind
     y = sind(theta).*sind(phi);
     z = cosd(theta);
     
-    scatter3([x;x],[y;-y],[z;z],[],[rho;rho],'filled');colorbar;view([10,30]),caxis([0,0.2])
+    scatter3([x;x],[y;-y],[z;z],[],[rho;rho],'filled');colorbar;view([10,30]),caxis(cx)
     hold on
     plot3(sin(pi/2:-pi/180:-pi/2),zeros(1,181),cos(pi/2:-pi/180:-pi/2),'--r');
     hold on
@@ -29,7 +30,7 @@ function theta0 = polar_plot(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind
     scatter3(sind(theta0),0,cosd(theta0),'+r');
     hold on
     mArrow3([sind(theta0),0,cosd(theta0)],[0,0,0], 'facealpha', 0.5, 'color', 'red', 'stemWidth', 0.01);
-    text(1.1*sind(theta0),0,1.1*cosd(theta0),num2str(theta0,3),'color','r','Fontsize',18);
+    text(1.1*sind(theta0),0,1.1*cosd(theta0),strcat(num2str(theta0,3),'^o'),'color','r','Fontsize',18);
     %contourf(x,y,z),colorbar;
     %scatter([x;x],[y;-y],[],[rho;rho],'.'),colorbar;
     %hold on
