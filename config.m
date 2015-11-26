@@ -25,6 +25,7 @@ const.Cam_DA = 9;
 const.Cam_Dim = 9;
 const.Cam_Name = {'DF','CF','BF','AF','AN','AA','BA','CA','DA'};
 const.Cam_Dim = length(const.Cam_Name);
+const.Cam_Degree = {'70.5^o','60^o','45.6^o','26.1^o','0','-26.1^o','-45.6^o','-60^o','-70.5^o'};
 
 % MISR spatial resolutions
 const.r275 = 275;

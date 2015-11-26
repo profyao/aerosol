@@ -8,11 +8,11 @@ function show(r,current,reg,band,cam,cmap,const)
     surf = reshape(current.surf((band-1)*9+cam,:),reg.num_reg_used,1);
     resid = reshape(current.resid((band-1)*9+cam,:),reg.num_reg_used,1);
     ref = reshape(reg.mean_equ_ref(:,:,band,cam),XDim_r,YDim_r);
-    [x,y] = find(reg.reg_is_used);
+    [x,y] = find(reg.reg_is_used);    
     
     if max(tau)~=min(tau)
         subplot(511)
-        plot_1d(r,tau,x,y,cmap,const,[min(tau),max(tau)]);
+        plot_1d(r,tau,x,y,cmap,const,[0.2,0.35]);
         title('AOD')
     else
         subplot(511)

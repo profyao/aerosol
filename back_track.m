@@ -1,6 +1,5 @@
 function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit,varargin)
     
-      
     switch var_str
         
         case 'tau'
@@ -12,15 +11,16 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                                 
                 kappa = varargin{1};
                 cnt = 1;
-                max_iter = 10;
-                lambda = 1e-4;
+                max_iter = 30;
+                lambda = 1;
                 n_neighbor = length(tau_neighbor);
 
                 while true
-
-                    new_taup = max(taup - lambda*g,1e-3);
+    
+                    incr = lambda*g;
+                    new_taup = max(taup - incr,1e-3);
                     new_taup = min(new_taup,3);
-                    
+                                        
                     [~,~,new_residp] = get_resid(new_taup,thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
 
                     if n_neighbor > 0 
@@ -38,10 +38,10 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                         break
                     end
 
-                    if cnt > max_iter
+                    if cnt > max_iter || abs(incr) < 1e-3 * taup
                         new_var = taup;
                         new_residp = residp;
-                        fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq+smooth,new_chisq+new_smooth);
+                        %fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq+smooth,new_chisq+new_smooth);
                         break
                     end
 
@@ -49,6 +49,7 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                     cnt = cnt + 1;
 
                 end
+                
             end
                                   
         case 'theta'

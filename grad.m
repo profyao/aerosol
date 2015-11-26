@@ -43,14 +43,14 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
 
                     g_v = (chisql-chisqr+smoothl-smoothr)/(taul-taur);
                     
-                    if abs(g_v-g0)<abs(g0)*1e-3
+                    if abs(g_v-g0)<abs(g0)*1e-3 + 1e-6
                         break
                     end
                     
                     if cnt > max_iter
                         fprintf('cannot converge to gradient within %d iterations! delta %s: %e, last grad: %e, curret grad: %e!\n',max_iter,var_str,delta_tau,g0,g_v)
-                        g_v = 0;
-                        flag = 0;
+                        %g_v = 0;
+                        %flag = 0;
                         break
                     end
                     

@@ -49,7 +49,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
     j = reg.ind_used(j2d(mask));
     
     if strcmp(Method,'CD')
-        iter = 10;
+        iter = 5;
     elseif strcmp(Method,'MCMC')
         iter = 100;
     else
@@ -58,7 +58,6 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
     %tau0_r = kron(tau0, ones(RegScale));
 	%current.tau = diag(tau0_r(x,y));
     %current.tau = nanmean(tau0(:))*ones(reg.num_reg_used,1);
-    current.tau = 0.1*ones(reg.num_reg_used,1);
     
     if strcmp(Method,'MCMC') %|| strcmp(Method,'MCMC-G')
         current.alpha = ones(const.Component_Num,1);
@@ -77,11 +76,11 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
     current.sigmasq = update_sigmasq(current.resid,Method);
 
     % Initialize kappa
-    %if strcmp(Method,'CD-random-noprior')
+    if strcmp(Method,'CD-random-noprior')
         current.kappa = 0;
-    %else
-    %    current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
-    %end
+    else
+        current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
+    end
     
     
     if strcmp(Method,'MCMC')
@@ -132,11 +131,11 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
         [current.tau,current.resid] = par_update_tau(current.tau,current.theta,current.resid,current.kappa,current.sigmasq,...
             delta,i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit, const);
 
-        %if strcmp(Method,'CD-random-noprior')
-        %    current.kappa = 0;
-        %else
-        %    current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
-        %end
+        if strcmp(Method,'CD-random-noprior')
+            current.kappa = 0;
+        else
+            current.kappa = update_kappa(current.tau,i,j,reg.num_reg_used,Method);
+        end
 
         %[current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
         %    i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit, const);

@@ -4,7 +4,7 @@ function [atm_path,surf,resid] = get_resid(tau,theta,regp,smartp,ExtCroSect,Comp
 
     %upbd = atm_path + surf_lim > regp.min_equ_ref;
     %upbd = atm_path > regp.min_equ_ref;
-    upbd = zeros(9,4);
+    
     
     if ~any(upbd(:)) && r > 1100
         %[resid,surf] = get_resid_eof(regp,atm_path,const);

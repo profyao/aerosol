@@ -1,6 +1,23 @@
-function theta0 = polar_plot(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,scatter_type,cx,const)
+function theta0 = polar_plot(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,cx,const)
     
-    [theta0,theta,~,phi,rho] = extract_BRF(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,scatter_type,const);
+    [theta0_ss,theta_ss,~,phi_ss,rho_ss] = extract_BRF(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,'SS',const);
+    [theta0_ms,theta_ms,~,phi_ms,rho_ms] = extract_BRF(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind,'MS',const);
+    len_ss = length(rho_ss);
+    len_ms = length(rho_ms);
+    
+    if len_ss <= len_ms
+        rho = rho_ss(1:len_ss) + rho_ms(1:len_ss);
+        theta0 = theta0_ss;
+        theta = theta_ss;
+        phi = phi_ss;
+    else
+        rho = rho_ss(1:len_ms) + rho_ms(1:len_ms);
+        theta0 = theta0_ms;
+        theta = theta_ms;
+        phi = phi_ms;
+    end
+ 
+    
     aod_grid = const.Model_OpticalDepthGrid;
     
     
@@ -35,8 +52,7 @@ function theta0 = polar_plot(aod_ind,srf_pres_ind,band_ind,component_ind,mu0_ind
     %scatter([x;x],[y;-y],[],[rho;rho],'.'),colorbar;
     %hold on
     %polar(0,theta0,'+r')
-    title(strcat('Component Particle:',num2str(component_ind),'Band:',num2str(band_ind),'AOD:',num2str(aod_grid(aod_ind))),...
-        'color','r','Fontsize',18);
+    title(strcat('Component Particle:',num2str(component_ind)),'color','r','Fontsize',18);
     % Hide the POLAR function data and leave annotations
     %set(h,'Visible','off')
     % Turn off axes and set square aspect ratio

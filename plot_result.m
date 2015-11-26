@@ -18,7 +18,7 @@ function plot_result(plot_name,r,const,varargin)
             for band = 1:const.Band_Dim
                 aod_max = 0;
                 subplot(2,2,band)
-                [aod_model,aod_aeronet] = load_aod_batch(Location,r,const,Method);
+                [date_key,key,theta,aod_model,aod_aeronet] = load_aod_batch(Location,r,const,Method);
                 aod_model_band = aod_model(:,band);
                 aod_aeronet_band = aod_aeronet(:,band);
                 aod_max = max([aod_max;aod_model_band;aod_aeronet_band]);
@@ -51,7 +51,8 @@ function plot_result(plot_name,r,const,varargin)
         for p = 2:nargin - 3
             
             Method = varargin{p};          
-            [aod_model,aod_aeronet] = load_aod_batch(Location,r,const,Method);
+            [date_key,key,xid,yid,lon,lat,theta,aod_model,aod_aeronet] = load_aod_batch(Location,r,const,Method);
+    
             
             if ~strcmp(Method,'MISR')
                 aod_model_band = aod_model(:,const.Band_Green);
@@ -90,15 +91,17 @@ function plot_result(plot_name,r,const,varargin)
         [aod_model, ~,~, ~, lon1,lat1] = load_aod(Date,Path,Orbit,Block,r,const,Method);
         [aod_aeronet, ~, ~, lon2,lat2] = load_aeronet(Date,Path,Block,r,Location,const);
         
-        aod_model = aod_model(:,2);
+        if ~strcmp(Method,'MISR')
+            aod_model = aod_model(:,2);
+        end
         aod_aeronet = aod_aeronet(:,2);
         
         aod = [aod_model;aod_aeronet];
-        %aod_min = min(aod);aod_max = max(aod);
-        aod_min = 0.02;aod_max=0.16;
+        aod_min = min(aod);aod_max = max(aod);
+        %aod_min = 0.02;aod_max=0.16;
         figure
-        scatter(lon1,lat1,50,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
-        scatter(lon2,lat2,100,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
+        scatter(lon1,lat1,200,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
+        scatter(lon2,lat2,200,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
         colormap(cmap),colorbar
         %uistack(h,'bottom');
         
@@ -218,43 +221,107 @@ function plot_result(plot_name,r,const,varargin)
         
     elseif strcmp(plot_name,'theta')
         
+        Date = varargin{1};
+        Path = varargin{2};
+        Orbit = varargin{3};
+        Block = varargin{4};
+        Method = varargin{5};
+        cmap = varargin{6};
+        
+        [~,theta,xid,yid,~,~] = load_aod(Date,Path,Orbit,Block,r,const,Method);
+        figure
+
+        if ~strcmp(Method,'MISR')
+
+            for j = 1:const.Component_Num
+                h = subplot(4,2,j);
+                p = get(h, 'pos');
+                p(1) = p(1) - 0.05;
+                p(3) = p(3) + 0.05;
+                set(h, 'pos', p);
+
+                plot_1d(r, theta(j,:), xid, yid, cmap, const,[0,1])
+
+                title(strcat('Component Num:',num2str(const.Component_Particle(j))))
+                set(gca,'FontSize',18)
+            end 
+
+        else
+
+            for j = 1:5
+                if j<=3
+                    h = subplot(3,2,j);
+                else
+                    h = subplot(3,2,j+1);
+                end
+                p = get(h, 'pos');
+                p(1) = p(1) - 0.05;
+                p(3) = p(3) + 0.05;
+                set(h, 'pos', p);
+
+                plot_1d(r,theta(j,:),xid,yid,cmap,const,[0,1])
+
+                switch j
+                    case 1
+                        title('Small Particle (<0.35\mu)')
+                    case 2
+                        title('Medium Particle (0.35\mu~0.7\mu)')
+                    case 3
+                        title('Large Particle (>0.7\mu)')
+                    case 4
+                        title('Spherical')
+                    case 5
+                        title('Non-Spherical')
+                end
+
+                set(gca,'FontSize',18)
+            end
+
+        end
+    
+        
+    elseif strcmp(plot_name, 'trace')
+        
         Location = varargin{1};
         Method = varargin{2};
-        cmap = varargin{3};
         [NUM,TXT,~] = xlsread('src/MISR_INFO.xls');
-        
+    
         id = find(strcmp(TXT(2:end,7),Location));
 
         Dates = TXT(id+1,2);
         Paths = NUM(id+1,3);
         Orbits = NUM(id+1,4);
         Blocks = NUM(id+1,5);
+
+        N = length(Dates);
+        figure
         
-        for i = 1:length(Dates)
-            
-            figure
-
-            for j = 1:const.Component_Num
-                
-                Date = Dates{i};
-                Path = Paths(i);
-                Orbit = Orbits(i);
-                Block = Blocks(i);
-
-                [reg,sample] = load_cache(Date,Path,Orbit,Block,r,'reg','sample',Method);
-
-                h = subplot(4,2,j);
-                p = get(h, 'pos');
-                p(1) = p(1) - 0.05;
-                p(3) = p(3) + 0.05;
-                set(h, 'pos', p);
-                [xid,yid] = find(reg.reg_is_used);
-                plot_1d(r, sample.theta(j,:), xid, yid, cmap, const,[0,1])
-                title(strcat('Component Num:',num2str(const.Component_Particle(j))))
-                set(gca,'FontSize',18)
-            end 
-            
-        end 
+        for i = 1:N
+           
+            Date = Dates{i};
+            Path = Paths(i);
+            Orbit = Orbits(i);
+            Block = Blocks(i);
+            [reg,sample] = load_cache(Date,Path,Orbit,Block,r,'reg','sample','MCMC');
+            [x1,y1] = find(reg.reg_is_used);
+            [~, x2, y2, lon_a, lat_a] = load_aeronet(Date,Path,Block,r,Location,const);
+            [~,~,I1,I2] = match_aeronet(x1,y1,x2,y2);
+            fprintf('MCMC:%d,aeronet:%d,%d points are matched!\n',length(x1),length(x2),length(I1))
+            aod = sample.tau(I1,:);
+            for j = 1:length(I1)
+                if strcmp(Method,'mean')
+                    plot(cumsum(aod(j,:))./[1:1001])
+                elseif strcmp(Method,'raw')
+                    tmp = aod(j,:);
+                    dif = arrayfun(@(x) tmp(x) - tmp(x-1), 2:length(tmp));
+                    disp(sum(dif~=0)/(length(tmp)-1))
+                    plot(tmp)
+                elseif strcmp(Method,'acf')
+                    plot(acf(aod(j,:)',1000))
+                end
+                hold on
+            end
+        end
         
     end
 
