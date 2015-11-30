@@ -10,8 +10,8 @@ function par_aod_retri_batch(Method,Location,r,core,const)
     Blocks = NUM(id+1,5);
     N = length(Dates);
     
-    for i = 1:N
-    %for i = 1:1
+    %for i = 1:N
+    for i = 1:1
          
         Date = Dates{i};
         Path = Paths(i);

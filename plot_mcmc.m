@@ -78,3 +78,6 @@ hline(0.125,'--r')
 % legend({'MLE','MAP+GMRF+Dirichlet','MCMC+GMRF+Dirichlet'},'Location','northwest')
 
 figure,plot_1d(4400,tau,x,y,hot,const)
+figure,bar([60,6280])
+set(gca,'XTickLabel',{'GMRF+MAP','GMRF+Dirichlet+MCMC'},'FontSize',18)
+ylabel('Computation Time (sec)')

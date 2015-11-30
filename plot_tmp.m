@@ -69,10 +69,33 @@ subplot(3,1,3),plot_1d(4400,sample.tau-tau,x,y,jet,const)
 % ylabel('\chi^2_p','rot',0)
 % title('Convexity near Optima')
 
+mixture;
+chisq = zeros(reg.num_reg_used,1);
+term_kappa = zeros(reg.num_reg_used,1);
+chisq_misr = zeros(reg.num_reg_used,1);
+term_kappa_misr = zeros(reg.num_reg_used,1);
+tau_misr = zeros(reg.num_reg_used,1);
+theta_misr = zeros(const.Component_Num,reg.num_reg_used);
+sigmasq = sample.sigmasq(:,end);
+pid = [119,255,240,237,267];
 
-p = 1;
+for p=pid
+    thetap = sample.theta(:,p);
+    taup = sample.tau(p);
+    xp = x(p);
+    yp = y(p);
+    chisq(p) = 0.5 * get_chisq(r,taup,thetap,sigmasq,xp,yp,const,ExtCroSect,CompSSA,smart,reg);
+    term_kappa(p) = 0.5 * get_term_kappa(i1d,j1d,p,sample.tau,taup);
+    [chisq_misr(p),tau_misr(p),theta_misr(:,p)] = get_misr_retri(r,theta_misr_grid,sigmasq,xp,yp,ExtCroSect,CompSSA,smart,reg,const);
+    term_kappa_misr(p) = 0.5 * get_term_kappa(i1d,j1d,p,sample.tau,tau_misr(p));
+    disp(p)
+end
+
+figure,plot(chisq(pid),chisq_misr(pid),'o'),refline(1,0)
+
 theta1_grid = linspace(0,1,100);
 theta2_grid = linspace(1,0,100);
+%theta2_grid = kron((1 - theta1_grid),thetap(2:end));
 theta_grid = [theta1_grid;theta2_grid];
 tau_grid = linspace(0,0.5,100);
 xp = x(p);
@@ -81,10 +104,10 @@ yp = y(p);
 Z = zeros(100,100);
 for ii = 1:100
     for jj = 1:100
-        chisq = 0.5 * get_chisq(r,tau_grid(ii),theta_grid(:,jj),sample_mle_00.sigmasq(:,end),xp,yp,const,ExtCroSect,CompSSA,smart,reg,reg_sim);
-        %term_kappa = 0.5 * get_term_kappa(i,j,p,tau,tau_grid(ii));
+        chisq = 0.5 * get_chisq(r,tau_grid(ii),theta_grid(:,jj),sample.sigmasq(:,end),xp,yp,const,ExtCroSect,CompSSA,smart,reg,reg_sim);
+        term_kappa = 0.5 * get_term_kappa(i1d,j1d,p,tau,tau_grid(ii));
         %term_alpha = (alpha-1)'*log(theta_grid(:,jj));
-        Z(ii,jj) = chisq; %+ term_kappa - term_alpha;
+        Z(ii,jj) = chisq; + term_kappa; %- term_alpha;
     end
 end
 figure

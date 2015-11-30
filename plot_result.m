@@ -98,7 +98,7 @@ function plot_result(plot_name,r,const,varargin)
         
         aod = [aod_model;aod_aeronet];
         aod_min = min(aod);aod_max = max(aod);
-        %aod_min = 0.02;aod_max=0.16;
+        %aod_min = 0.02;aod_max=0.2;
         figure
         scatter(lon1,lat1,200,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
         scatter(lon2,lat2,200,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
