@@ -19,7 +19,7 @@ function lut_movie(Date,Path,Orbit,Block,r,show_type,const)
         
         cnt = 1;
         
-        dir_video = 'video/';
+        dir_video = 'video';
         
         if ~exist(dir_video,'dir')
             mkdir(dir_video)
@@ -31,7 +31,7 @@ function lut_movie(Date,Path,Orbit,Block,r,show_type,const)
         file_video = strcat(Date,'_P',Path,'_O',Orbit,'_B',Block,'_',show_type,'.avi');
        
         writerObj = VideoWriter(strcat(dir_video,'/',file_video));
-        writerObj.FrameRate = 3;
+        writerObj.FrameRate = 1;
         open(writerObj)
         
         if strcmp(show_type,'cam_component')

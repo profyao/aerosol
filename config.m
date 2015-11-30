@@ -107,7 +107,9 @@ const.Model_OpticalDepthFinerGrid = 0:const.Model_AOTGridGap:3;
 const.Model_OpticalDepthFinerGridLen = length(const.Model_OpticalDepthFinerGrid);
 
 const.Component_Particle = [1,2,3,6,8,14,19,21];
+%const.Component_Particle = [6,14];
 const.Component_Num = length(const.Component_Particle);
+%const.alpha = 1.25 *  ones(const.Component_Num,1);
 
 const.Config_albedo_thresh_land = 0.015;
 

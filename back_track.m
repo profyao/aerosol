@@ -41,7 +41,7 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                     if cnt > max_iter || abs(incr) < 1e-3 * taup
                         new_var = taup;
                         new_residp = residp;
-                        %fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq+smooth,new_chisq+new_smooth);
+%                        fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq+smooth,new_chisq+new_smooth);
                         break
                     end
 
@@ -58,32 +58,44 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
                 new_var = thetap;
                 new_residp = residp;
             else
-            
+                
+                alpha = varargin{1};
                 cnt = 1;
-                max_iter = 10;
-                lambda = 1e-4;
+                max_iter = 20;
+                lambda = 100;
 
                 while true
 
-                    new_thetap = thetap - lambda*g;
-                    new_thetap(new_thetap<0) = 0;
+                    incr = lambda*g;
+                    
+                    if norm(incr)>norm(thetap)
+                        lambda = 0.5 * lambda;
+                        continue
+                    end
+                    
+                    new_thetap = thetap - incr;
+                    new_thetap(new_thetap<1e-6) = 1e-6;
                     new_thetap = new_thetap/sum(new_thetap);
 
                     [~,~,new_residp] = get_resid(taup,new_thetap,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
 
-
                     new_chisq = nansum(new_residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));       
                     chisq = nansum(residp(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));
+                    
+                    % add Dirichlet prior
+                    l0 = (alpha - 1)'*log(thetap);
+                    l1 = (alpha - 1)'*log(new_thetap);
+                    % end Dirichlet prior
 
-                    if new_chisq < chisq
+                    if new_chisq - 2 * l1 < chisq - 2 * l0
                         new_var = new_thetap;
                         break
                     end
 
-                    if cnt > max_iter
+                    if cnt > max_iter || norm(incr) < 1e-3 * norm(thetap)
                         new_var = thetap;
                         new_residp = residp;
-                        fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq,new_chisq);
+ %                       fprintf('cannot achieve descent within %d iterations! %s: %e, last value: %e, curret value: %e!\n',max_iter,var_str,lambda,chisq,new_chisq);
                         break
                     end
 
@@ -92,7 +104,7 @@ function [new_residp,new_var] = back_track(g,taup,tau_neighbor,thetap,var_str,si
 
                 end
             end
-                      
+                                  
     end
 
 end

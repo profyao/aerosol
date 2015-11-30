@@ -14,7 +14,7 @@ function polar_movie(aod_ind,sfc_pres_ind,band_ind,const)
         cx = [0,0.15];
 
         writerObj = VideoWriter(strcat(dir_video,'/',file_video));
-        writerObj.FrameRate = 8;
+        writerObj.FrameRate = ;
         open(writerObj);
         hFig = figure(1);
         set(hFig, 'Position', [10 10 1000 1000])

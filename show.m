@@ -12,7 +12,7 @@ function show(r,current,reg,band,cam,cmap,const)
     
     if max(tau)~=min(tau)
         subplot(511)
-        plot_1d(r,tau,x,y,cmap,const,[0.2,0.35]);
+        plot_1d(r,tau,x,y,cmap,const);
         title('AOD')
     else
         subplot(511)

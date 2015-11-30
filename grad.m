@@ -43,12 +43,12 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
 
                     g_v = (chisql-chisqr+smoothl-smoothr)/(taul-taur);
                     
-                    if abs(g_v-g0)<abs(g0)*1e-3 + 1e-6
+                    if abs(g_v-g0)<abs(g0)*1e-2 + 1e-6 && cnt > 1
                         break
                     end
                     
                     if cnt > max_iter
-                        fprintf('cannot converge to gradient within %d iterations! delta %s: %e, last grad: %e, curret grad: %e!\n',max_iter,var_str,delta_tau,g0,g_v)
+                        %fprintf('cannot converge to gradient within %d iterations! delta %s: %e, last grad: %e, curret grad: %e!\n',max_iter,var_str,delta_tau,g0,g_v)
                         %g_v = 0;
                         %flag = 0;
                         break
@@ -71,12 +71,13 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
                 flag = -1 * ones(const.Component_Num,1);               
             else
                 
-                g_v = NaN*ones(const.Component_Num,1);
+                g_v = zeros(const.Component_Num,1);
                 flag = NaN*ones(const.Component_Num,1);
-           
+
                 g = 0; 
                 cnt = 1;
                 max_iter = 10;
+                alpha = varargin{1};
               
                 for c = 1:const.Component_Num
                     
@@ -88,31 +89,36 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
                         
                         g0 = g;
 
-                        thetal = thetap - delta_theta_v; thetal(thetal<0)=0;
+                        thetal = thetap - delta_theta_v; thetal(thetal<1e-6)=1e-6;
                         thetar = thetap + delta_theta_v;
                         [~,~,residl] = get_resid(taup,thetal/sum(thetal),regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
                         [~,~,residr] = get_resid(taup,thetar/sum(thetar),regp,smartp,ExtCroSect,CompSSA,const,r,add_limit);
-
+                        
                         if isinf(residl(1)) || isinf(residr(1))
                             g_v(c) = 0;
                             flag(c) = 0;
                             break 
-                            
-                        else
 
+                        else
+                            
                             chisql = nansum(residl(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));       
                             chisqr = nansum(residr(const.Channel_Used).^2 ./ sigmasq(const.Channel_Used));
-
-                            g = (chisql-chisqr)/(thetal(c)-thetar(c));
                             
-                            if abs(g-g0)<abs(g0)*1e-3
+                            % add Dirichlet prior
+                            ll = 2 * (alpha - 1)'*log(thetal/sum(thetal));
+                            lr = 2 * (alpha - 1)'*log(thetar/sum(thetar));
+                            % end Dirichlet prior
+
+                            g = (chisql - chisqr - ll + lr)/(thetal(c)-thetar(c));
+                            
+                            if abs(g-g0)<abs(g0)*1e-2 + 1e-6 && cnt > 1
                                 break
                             end   
                             
                             if cnt > max_iter
                                 fprintf('cannot converge to gradient within %d iterations! delta %s: %e, last grad: %e, curret grad: %e!\n',max_iter,var_str,delta_theta,g0,g)
-                                g_v(c) = 0;
-                                flag(c) = 0;
+                                %g_v(c) = 0;
+                                %flag(c) = 0;
                                 break
                             end
 
@@ -122,12 +128,14 @@ function [g_v,flag] = grad(taup,tau_neighbor,thetap,var_str,sigmasq,residp,regp,
                         end
                     end
                     
+                    
                     if isnan(flag(c))
                         g_v(c) = g;
                         flag(c) = 1;
                     end
 
                 end
+                                
             end
 
     end

@@ -6,7 +6,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_ta
             mean_neighbor = mean(old_tau_neighbor);
         end
         
-        if strcmp(Method,'CD-random') || strcmp(Method,'MCMC') || strcmp(Method,'CD-random-noprior') || strcmp(Method,'MCMC-G')
+        if strcmp(Method,'CD-random') || strcmp(Method,'MCMC') || strcmp(Method,'CD-random-noprior')
    
             if isinf(old_residp(1))
                 taup = old_taup * 0.8;
@@ -44,7 +44,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_ta
 
             switch Method
 
-                case {'CD-random','CD-random-noprior','MCMC-G'}
+                case {'CD-random','CD-random-noprior'}
 
                     if chisq + smooth0 > new_chisq + smooth1
                         new_taup = taup;
@@ -77,7 +77,7 @@ function [new_taup,new_residp] = par_update_tau_pixel(old_residp,old_taup,old_ta
 
             end
             
-        elseif strcmp(Method,'CD')
+        elseif strcmp(Method,'CD') || strcmp(Method,'CD-noprior')
             
             [g,flag] = grad(old_taup,old_tau_neighbor,thetap,'tau',sigmasq,old_residp,regp,smartp,ExtCroSect,CompSSA,const,r,add_limit,kappa);
             

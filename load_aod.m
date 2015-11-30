@@ -17,7 +17,7 @@ function [aod,theta,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,r,const,Op
         lon = lon(valid);lat=lat(valid);
         return
 
-    elseif strcmp(Opt,'CD-random') || strcmp(Opt,'MCMC') || strcmp(Opt,'CD') || strcmp(Opt,'CD-random-noprior') || strcmp(Opt,'MCMC-G')
+    elseif strcmp(Opt,'CD-random') || strcmp(Opt,'CD') || strcmp(Opt,'MCMC')  || strcmp(Opt,'CD-random-noprior') || strcmp(Opt,'CD-noprior')
 
         [reg,sample] = load_cache(Date,Path,Orbit,Block,r,'reg','sample',Opt);
         [xid,yid] = find(reg.reg_is_used);
