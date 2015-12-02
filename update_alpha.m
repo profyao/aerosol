@@ -4,7 +4,7 @@ function new_alpha = update_alpha(alpha,theta,Component_Num,num_reg_used,Method)
         
         alpha0 = Dirichlet_mle(theta, Component_Num);
         sum_log_theta = sum(log(theta));
-        relax = 9;
+        relax = 1;
         a = - sum_log_theta/relax;
         b = - alpha0'*relax./sum_log_theta;
 

@@ -79,7 +79,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
         %current.alpha = Dirichlet_mle(current.theta',2);
     end
     
-    if strcmp(Method,'MCMC')
+    if strcmp(Method,'MCMC') %|| strcmp(Method,'CD') || strcmp(Method,'CD-random')
         theta0 = gen_theta(current.alpha,XDim_r,YDim_r);
         current.theta = theta0(:,reg.reg_is_used);
     else
@@ -144,8 +144,7 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
         [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
             i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit, const);
 
-        %if ~(strcmp(Method,'CD-random-noprior') || strcmp(Method,'CD-noprior'))
-        if strcmp(Method,'MCMC')
+        if strcmp(Method,'MCMC') %|| strcmp(Method,'CD') || strcmp(Method,'CD-random')
             current.alpha = update_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used, Method);
         end
 

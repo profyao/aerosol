@@ -17,19 +17,19 @@ function [aod,theta,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,r,const,Op
         lon = lon(valid);lat=lat(valid);
         return
 
-    elseif strcmp(Opt,'CD-random') || strcmp(Opt,'CD') || strcmp(Opt,'MCMC')  || strcmp(Opt,'CD-random-noprior') || strcmp(Opt,'CD-noprior')
-
+    %elseif strcmp(Opt,'CD-random') || strcmp(Opt,'CD') || strcmp(Opt,'MCMC')  || strcmp(Opt,'CD-random-noprior') || strcmp(Opt,'CD-noprior')
+    else
         [reg,sample] = load_cache(Date,Path,Orbit,Block,r,'reg','sample',Opt);
         [xid,yid] = find(reg.reg_is_used);
-    else
-        error('no aod data source is specified!\n')
+    %else
+    %    error('no aod data source is specified!\n')
     end
 
 
     if strcmp(Opt,'MCMC')
         iter = size(sample.tau,2);
-        tau = mean(sample.tau(:,300:end),2);
-        theta = squeeze(mean(sample.theta(:,:,300:end),3));
+        tau = mean(sample.tau(:,200:end),2);
+        theta = squeeze(mean(sample.theta(:,:,200:end),3));
         %theta = squeeze(sample.theta(:,:,1));
     else
         tau = sample.tau;
