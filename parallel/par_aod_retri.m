@@ -79,12 +79,12 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
         %current.alpha = Dirichlet_mle(current.theta',2);
     end
     
-    if strcmp(Method,'MCMC') %|| strcmp(Method,'CD') || strcmp(Method,'CD-random')
-        theta0 = gen_theta(current.alpha,XDim_r,YDim_r);
-        current.theta = theta0(:,reg.reg_is_used);
-    else
+    %if strcmp(Method,'MCMC')
+    %    theta0 = gen_theta(current.alpha,XDim_r,YDim_r);
+    %    current.theta = theta0(:,reg.reg_is_used);
+    %else
         current.theta = 1/const.Component_Num * ones(const.Component_Num,reg.num_reg_used);
-    end
+    %end
     
     % for simulation, edit function get_resid()
     [current.atm_path,current.surf,current.resid] = par_update_resid(current.tau,current.theta, x, y, smart, reg, ExtCroSect, CompSSA, par, core, const, r, add_limit);    
@@ -144,9 +144,9 @@ function [sample,error_flag] = par_aod_retri(Date,Path,Orbit,Block,r,Method,core
         [current.theta, current.resid] = par_update_theta(current.theta,current.tau,current.resid,current.sigmasq,current.alpha,...
             i, j, x, y, smart, reg, ExtCroSect, CompSSA, Method, r, par, core, add_limit, const);
 
-        if strcmp(Method,'MCMC') %|| strcmp(Method,'CD') || strcmp(Method,'CD-random')
-            current.alpha = update_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used, Method);
-        end
+        %if strcmp(Method,'MCMC')
+        %    current.alpha = update_alpha(current.alpha,current.theta',const.Component_Num,reg.num_reg_used, Method);
+        %end
 
         current.sigmasq = update_sigmasq(current.resid,Method);
 

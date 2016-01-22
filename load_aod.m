@@ -25,11 +25,10 @@ function [aod,theta,xid,yid,lon,lat] = load_aod(Date,Path,Orbit,Block,r,const,Op
     %    error('no aod data source is specified!\n')
     end
 
-
     if strcmp(Opt,'MCMC')
         iter = size(sample.tau,2);
-        tau = mean(sample.tau(:,200:end),2);
-        theta = squeeze(mean(sample.theta(:,:,200:end),3));
+        tau = mean(sample.tau(:,200:50:end),2);
+        theta = squeeze(mean(sample.theta(:,:,200:50:end),3));
         %theta = squeeze(sample.theta(:,:,1));
     else
         tau = sample.tau;

@@ -98,10 +98,17 @@ function plot_result(plot_name,r,const,varargin)
         
         %aod = [aod_model;aod_aeronet];
         %aod_min = min(aod);aod_max = max(aod);
+        if r == 1100
+            pixsize = 25;
+        elseif r== 4400
+            pixsize = 100;
+        else
+            pixsize = 400;
+        end
         aod_min = 0.02;aod_max=0.2;
         figure
-        scatter(lon1,lat1,100,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
-        scatter(lon2,lat2,100,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
+        scatter(lon1,lat1,pixsize,aod_model,'s','filled'), set(gca,'CLim',[aod_min aod_max]), hold on
+        scatter(lon2,lat2,80,aod_aeronet,'o','filled','MarkerEdgeColor','k'), set(gca,'CLim',[aod_min aod_max])
         colormap(cmap),colorbar
         %uistack(h,'bottom');
         
@@ -240,7 +247,7 @@ function plot_result(plot_name,r,const,varargin)
                 p(3) = p(3) + 0.05;
                 set(h, 'pos', p);
 
-                plot_1d(r, theta(j,:), xid, yid, cmap, const,[0,0.5])
+                plot_1d(r, theta(j,:), xid, yid, cmap, const,[0,0.25])
 
                 title(strcat('Component Num:',num2str(const.Component_Particle(j))))
                 set(gca,'FontSize',18)

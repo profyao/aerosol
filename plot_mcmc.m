@@ -59,10 +59,9 @@ figure('position',[300 300 800 600])
 plot(tau,sample_mle_50.tau,'o','Color',const.cols(1,:)),hold on
 plot(tau,mean(sample_mcmc_50.tau(:,100:20:end),2),'o','Color',const.cols(3,:))
 plot(tau,sample_map_50_kappa.tau,'o','Color',const.cols(2,:)),hold on
-%plot(tau,sample_map_00_kappa.tau,'o','Color',const.cols(3,:))
 %plot(tau,mean(sample_mcmc_00.tau(:,100:20:end),2),'o','Color',const.cols(3,:)),hold on
-%plot(tau,sample_map_50.tau,'o','Color',const.cols(2,:)),hold on
-%plot(tau,sample_mle_50.tau,'o','Color',const.cols(1,:))
+%plot(tau,sample_map_00.tau,'o','Color',const.cols(1,:)),hold on
+%plot(tau,sample_map_00_kappa.tau,'o','Color',const.cols(2,:))
 cy = [0.05,0.55];
 cx = [0.05,0.55];
 xlim(cx),ylim(cy)
@@ -70,17 +69,18 @@ line('XData', cx, 'YData', cy, 'LineStyle', '-','LineWidth', 1, 'Color','k')
 xlabel('True AOD in Simulation')
 ylabel('Retrieved AOD')
 set(gca,'FontSize',18)
-legend({'MLE','MCMC+GMRF+Dirichlet','MAP+GMRF'},'Location','northwest')
+%legend({'MCMC','MAP+Dirichlet','MAP+uniform'},'Location','northwest')
+legend({'MISR Operational','MCMC+Dirichlet','MAP+uniform'},'Location','northwest')
 %legend({'MAP+GMRF+Dirichlet','MLE','MCMC+GMRF+Dirichlet','MAP+GMRF'},'Location','northwest')
 %legend({'MAP+GMRF+Dirichlet','MAP+GMRF'},'Location','northwest')
 
 figure('position',[300 300 800 600])
-t = zeros(const.Component_Num,3);
-t(:,1) = mean(sample_mle_00.theta,2);
+t = zeros(const.Component_Num,2);
+t(:,1) = mean(sample_map_00.theta,2);
 t(:,2) = mean(sample_map_00_kappa.theta,2);
 t(:,3) = mean(squeeze(mean(sample_mcmc_00.theta(:,:,100:20:end),3)),2);
 bar(t)
-legend({'MLE','MAP+GMRF','MCMC+GMRF+Dirichlet'},'Location','northwest')
+legend({'MAP+Dirichlet','MAP+uniform','MCMC'},'Location','northwest')
 hline(0.125,'--r')
 set(gca,'FontSize',18)
 % s1 = scatter(tau,sample_mle_00.tau,'MarkerEdgeColor',const.cols(1,:),'MarkerFaceColor',const.cols(1,:));hold on
